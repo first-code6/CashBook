@@ -1,5 +1,4 @@
 import CycleOverview from '../components/CycleOverview'
-import MonthChart from '../components/MonthChart'
 import AddFab from '../components/AddFab'
 import { useCashbook } from '../context/CashbookContext'
 import { useCycleOverview } from '../hooks/useCycleStats'
@@ -22,13 +21,6 @@ export default function HomePage() {
         balance={overview.balance}
         count={overview.count}
         progress={overview.progress}
-      />
-
-      <MonthChart
-        cycleStart={overview.cycle.start}
-        cycleEnd={overview.cycle.end}
-        dailyMap={overview.dailyMap}
-        cycleRange={overview.cycleRange}
       />
 
       <AddFab defaultDate={getToday()} />

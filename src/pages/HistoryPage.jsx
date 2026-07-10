@@ -1,122 +1,113 @@
 import { useMemo, useState } from 'react'
-import { Button, Card, Tag, Title, Wallet } from 'animal-island-ui'
+import { Button, Card, Tag, Title } from 'animal-island-ui'
 import AddFab from '../components/AddFab'
+import MonthChart from '../components/MonthChart'
 import { useCashbook } from '../context/CashbookContext'
-import { useHistoryOverview } from '../hooks/useCycleStats'
+import { useCycleOverview } from '../hooks/useCycleStats'
 import { formatDayLabel, getToday } from '../lib/date'
 import { formatMoney } from '../lib/money'
 
 export default function HistoryPage() {
   const { state, deleteTransaction } = useCashbook()
-  const history = useHistoryOverview(
+  const overview = useCycleOverview(
     state.transactions,
     state.settings.cycleStartDay,
   )
-  const [expanded, setExpanded] = useState(getToday())
+  const [selectedDate, setSelectedDate] = useState(getToday())
 
   const categoryMap = useMemo(
     () => Object.fromEntries(state.categories.map((item) => [item.id, item.name])),
     [state.categories],
   )
 
+  const dayItems = useMemo(() => {
+    return state.transactions
+      .filter((item) => item.date === selectedDate)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  }, [state.transactions, selectedDate])
+
+  const daySummary = useMemo(() => {
+    const income = dayItems
+      .filter((item) => item.type === 'income')
+      .reduce((sum, item) => sum + item.amount, 0)
+    const expense = dayItems
+      .filter((item) => item.type === 'expense')
+      .reduce((sum, item) => sum + item.amount, 0)
+    return { income, expense, count: dayItems.length }
+  }, [dayItems])
+
+  const handleSelectDate = (date) => {
+    setSelectedDate((current) => (current === date ? '' : date))
+  }
+
   return (
     <div className="page page--history">
-      <section className="section-block">
-        <div className="section-title section-title--row">
-          <Title size="middle" color="app-orange">
-            历史概括
-          </Title>
-          <Tag color="app-yellow" size="small">
-            今天 → 账期开始
-          </Tag>
-        </div>
+      <MonthChart
+        cycleStart={overview.cycle.start}
+        cycleEnd={overview.cycle.end}
+        dailyMap={overview.dailyMap}
+        cycleRange={overview.cycleRange}
+        selectedDate={selectedDate}
+        onSelectDate={handleSelectDate}
+      />
 
-        <Card color="app-orange" pattern="default" className="history-summary">
-          <div className="history-summary__item">
-            <span>区间支出</span>
-            <Wallet value={formatMoney(history.expense)} size="small" />
+      {selectedDate && (
+        <section className="section-block day-detail">
+          <div className="section-title section-title--stack">
+            <Title size="middle" color="app-orange">
+              {formatDayLabel(selectedDate)}
+            </Title>
+            <Tag color="app-yellow" size="small">
+              {daySummary.count} 笔 · 支 ¥{formatMoney(daySummary.expense)} · 收 ¥
+              {formatMoney(daySummary.income)}
+            </Tag>
           </div>
-          <div className="history-summary__item">
-            <span>区间收入</span>
-            <Wallet value={formatMoney(history.income)} size="small" />
-          </div>
-          <div className="history-summary__item">
-            <span>覆盖区间</span>
-            <strong className="history-summary__range">{history.rangeLabel}</strong>
-          </div>
-        </Card>
-      </section>
 
-      <div className="history-list">
-        {history.days.map((day) => (
-          <Card key={day.date} className="history-day">
-            <button
-              type="button"
-              className="history-day__header"
-              onClick={() =>
-                setExpanded((current) => (current === day.date ? '' : day.date))
-              }
-            >
-              <div>
-                <p className="history-day__title">{formatDayLabel(day.date)}</p>
-                <p className="history-day__meta">
-                  {day.count} 笔 · 收入 ¥{formatMoney(day.income)}
-                </p>
-              </div>
-              <div className="history-day__expense">
-                <span>支出</span>
-                <strong>¥{formatMoney(day.expense)}</strong>
-              </div>
-            </button>
-
-            {expanded === day.date && (
-              <div className="history-day__body">
-                {day.items.length === 0 ? (
-                  <p className="history-day__empty">这一天没有记录</p>
-                ) : (
-                  day.items.map((item) => (
-                    <div key={item.id} className="history-item">
-                      <div>
-                        <p className="history-item__category">
-                          {categoryMap[item.categoryId] || '未分类'}
-                          <Tag
-                            size="small"
-                            color={item.type === 'income' ? 'app-green' : 'app-red'}
-                          >
-                            {item.type === 'income' ? '收入' : '支出'}
-                          </Tag>
-                        </p>
-                        <p className="history-item__note">
-                          {item.note || '无备注'}
-                        </p>
-                      </div>
-                      <div className="history-item__side">
-                        <strong
-                          className={
-                            item.type === 'income' ? 'text-income' : 'text-expense'
-                          }
-                        >
-                          {item.type === 'income' ? '+' : '-'}
-                          {formatMoney(item.amount)}
-                        </strong>
-                        <Button
+          <Card className="day-detail__card">
+            {dayItems.length === 0 ? (
+              <p className="history-day__empty">这一天没有记录</p>
+            ) : (
+              <div className="day-detail__list">
+                {dayItems.map((item) => (
+                  <div key={item.id} className="history-item">
+                    <div>
+                      <p className="history-item__category">
+                        {categoryMap[item.categoryId] || '未分类'}
+                        <Tag
                           size="small"
-                          danger
-                          onClick={() => deleteTransaction(item.id)}
+                          color={item.type === 'income' ? 'app-green' : 'app-red'}
                         >
-                          删除
-                        </Button>
-                      </div>
+                          {item.type === 'income' ? '收入' : '支出'}
+                        </Tag>
+                      </p>
+                      <p className="history-item__note">{item.note || '无备注'}</p>
                     </div>
-                  ))
-                )}
+                    <div className="history-item__side">
+                      <strong
+                        className={
+                          item.type === 'income' ? 'text-income' : 'text-expense'
+                        }
+                      >
+                        {item.type === 'income' ? '+' : '-'}
+                        {formatMoney(item.amount)}
+                      </strong>
+                      <Button
+                        size="small"
+                        danger
+                        onClick={() => deleteTransaction(item.id)}
+                      >
+                        删除
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </Card>
-        ))}
-      </div>
+        </section>
+      )}
 
-      <AddFab defaultDate={getToday()} />
+      <AddFab defaultDate={selectedDate || getToday()} />
     </div>
   )
 }

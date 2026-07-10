@@ -12,7 +12,7 @@ export default function CycleOverview({
 }) {
   return (
     <section className="section-block overview-block">
-      <div className="section-title section-title--row">
+      <div className="section-title section-title--stack">
         <Title size="middle" color="app-green">
           总概括
         </Title>

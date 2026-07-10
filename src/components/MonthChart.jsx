@@ -4,13 +4,20 @@ import { useCycleCalendarDays } from '../hooks/useCycleStats'
 
 const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日']
 
-export default function MonthChart({ cycleStart, cycleEnd, dailyMap, cycleRange }) {
+export default function MonthChart({
+  cycleStart,
+  cycleEnd,
+  dailyMap,
+  cycleRange,
+  selectedDate,
+  onSelectDate,
+}) {
   const cells = useCycleCalendarDays(cycleStart, cycleEnd, dailyMap)
   const today = getToday()
 
   return (
     <section className="section-block month-chart">
-      <div className="section-title section-title--row">
+      <div className="section-title section-title--stack">
         <Title size="middle" color="app-teal">
           月图
         </Title>
@@ -44,21 +51,26 @@ export default function MonthChart({ cycleStart, cycleEnd, dailyMap, cycleRange 
             }
 
             const isToday = cell.date === today
+            const isSelected = cell.date === selectedDate
             const hasExpense = cell.expense > 0
             const hasIncome = cell.income > 0
 
             return (
-              <div
+              <button
                 key={cell.key}
+                type="button"
                 className={[
                   'calendar-cell',
-                  'calendar-cell--static',
+                  'calendar-cell--interactive',
                   'calendar-cell--in-cycle',
                   isToday ? 'calendar-cell--today' : '',
+                  isSelected ? 'calendar-cell--selected' : '',
                   hasExpense || hasIncome ? 'calendar-cell--has-data' : '',
                 ]
                   .filter(Boolean)
                   .join(' ')}
+                onClick={() => onSelectDate?.(cell.date)}
+                aria-pressed={isSelected}
               >
                 <span className="calendar-cell__day">{cell.day}</span>
                 <span
@@ -75,7 +87,7 @@ export default function MonthChart({ cycleStart, cycleEnd, dailyMap, cycleRange 
                 >
                   {hasIncome ? `+${formatCompactMoney(cell.income)}` : ''}
                 </span>
-              </div>
+              </button>
             )
           })}
         </div>

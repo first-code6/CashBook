@@ -181,6 +181,7 @@ textarea:focus {
 }
 
 .page--home,
+.page--history,
 .page--charts {
   display: grid;
   gap: 1.1rem;
@@ -200,6 +201,15 @@ textarea:focus {
   justify-content: space-between;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.section-title--stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  text-align: center;
 }
 
 .overview-hero {
@@ -343,6 +353,24 @@ textarea:focus {
   cursor: default;
 }
 
+.calendar-cell--interactive {
+  cursor: pointer;
+  font: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.calendar-cell--interactive:hover {
+  transform: translateY(-2px);
+  border-color: rgba(42, 157, 143, 0.55);
+}
+
+.calendar-cell--interactive:focus-visible {
+  outline: 2px solid #2a9d8f;
+  outline-offset: 2px;
+}
+
 .calendar-cell--empty {
   background: transparent;
   border: none;
@@ -362,6 +390,12 @@ textarea:focus {
 
 .calendar-cell--has-data {
   border-color: rgba(231, 111, 81, 0.35);
+}
+
+.calendar-cell--selected {
+  border-color: #e76f51;
+  background: linear-gradient(180deg, rgba(255, 214, 186, 0.9), rgba(255, 255, 255, 0.92));
+  box-shadow: 0 4px 0 rgba(231, 111, 81, 0.18);
 }
 
 .calendar-cell__day {
@@ -417,6 +451,17 @@ textarea:focus {
   font-size: 0.82rem;
   line-height: 1.35;
   word-break: break-all;
+}
+
+.day-detail__card {
+  padding: 0.85rem 0.9rem 1rem;
+  box-shadow: 0 8px 0 rgba(180, 100, 50, 0.1);
+}
+
+.day-detail__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
 }
 
 .history-list {
@@ -944,6 +989,10 @@ textarea:focus {
   .section-title--row {
     justify-content: center;
     text-align: center;
+  }
+
+  .section-title--stack {
+    align-items: center;
   }
 
   .overview-hero,

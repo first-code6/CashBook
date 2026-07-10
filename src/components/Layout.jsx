@@ -32,9 +32,6 @@ export default function Layout() {
                 <Title size="large" color="app-green">
                   小岛记账
                 </Title>
-                <p className="app-header__subtitle">
-                  大胆记账，账期一目了然
-                </p>
               </div>
               <div className="app-header__time">
                 <Time />
@@ -47,7 +44,7 @@ export default function Layout() {
           <NavButton to="/" end>
             首页
           </NavButton>
-          <NavButton to="/history">历史</NavButton>
+          <NavButton to="/history">月图</NavButton>
           <NavButton to="/charts">图表</NavButton>
           <NavButton to="/settings">设置</NavButton>
         </nav>
