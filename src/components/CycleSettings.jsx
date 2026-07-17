@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Button, Card, Title } from 'animal-island-ui'
+import { Button, Card } from 'animal-island-ui'
 import DayPicker from './DayPicker'
+import SectionHeading from './SectionHeading'
 import { useCashbook } from '../context/CashbookContext'
 import { useAlertDialog } from '../hooks/useAlertDialog'
 import { formatCycleRange, getCurrentCycle, normalizeCycleStartDay } from '../lib/billingCycle'
@@ -29,29 +30,24 @@ export default function CycleSettings() {
   }
 
   return (
-    <section className="settings-section">
-      <div className="section-title">
-        <Title size="large" color="app-teal">
-          账期设置
-        </Title>
+    <Card color="app-teal" pattern="default" className="island-panel">
+      <div className="island-panel__head">
+        <SectionHeading tone="teal">账期开始日</SectionHeading>
       </div>
-      <Card color="app-teal" pattern="default" className="cycle-settings">
-        <p className="cycle-settings__desc">
-          点选每月账期开始日（最晚 28 号，避免部分月份没有 29/30/31）。账期从该日开始，到下个月同一天的前一天结束。例如选 10
-          号，则本账期为 10 日到下月 9 日。
-        </p>
-        <div className="form-field">
-          <span className="form-field__label">每月开始日（1–28）</span>
-          <DayPicker value={day} onChange={setDay} />
-        </div>
-        <p className="cycle-settings__preview">
-          已选：每月 {day} 号 · 当前预览账期：{preview}
-        </p>
-        <Button type="primary" block onClick={handleSave}>
-          保存账期
-        </Button>
-      </Card>
+      <p className="island-panel__desc">
+        点选每月账期开始日（最晚 28 号）。账期从该日开始，到下个月同一天的前一天结束。
+      </p>
+      <div className="form-field">
+        <span className="form-field__label">每月开始日（1–28）</span>
+        <DayPicker value={day} onChange={setDay} />
+      </div>
+      <p className="cycle-settings__preview">
+        已选：每月 {day} 号 · 当前预览：{preview}
+      </p>
+      <Button type="primary" block onClick={handleSave}>
+        保存账期
+      </Button>
       {alertDialog}
-    </section>
+    </Card>
   )
 }

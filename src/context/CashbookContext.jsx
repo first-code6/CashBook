@@ -140,9 +140,7 @@ export function CashbookProvider({ children }) {
     [commit],
   )
 
-  const exportData = useCallback(() => {
-    exportToFile(stateRef.current)
-  }, [])
+  const exportData = useCallback(() => exportToFile(stateRef.current), [])
 
   const importData = useCallback(
     async (file) => {

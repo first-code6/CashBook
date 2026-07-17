@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Button, Card, Tag, Title } from 'animal-island-ui'
+import { Button, Card, Modal, Tag } from 'animal-island-ui'
 import AddFab from '../components/AddFab'
 import MonthChart from '../components/MonthChart'
+import SectionHeading from '../components/SectionHeading'
 import { useCashbook } from '../context/CashbookContext'
 import { useCycleOverview } from '../hooks/useCycleStats'
 import { formatDayLabel, getToday } from '../lib/date'
@@ -14,6 +15,7 @@ export default function HistoryPage() {
     state.settings.cycleStartDay,
   )
   const [selectedDate, setSelectedDate] = useState(getToday())
+  const [confirmId, setConfirmId] = useState('')
 
   const categoryMap = useMemo(
     () => Object.fromEntries(state.categories.map((item) => [item.id, item.name])),
@@ -52,60 +54,78 @@ export default function HistoryPage() {
       />
 
       {selectedDate && (
-        <section className="section-block day-detail">
-          <div className="section-title section-title--stack">
-            <Title size="middle" color="app-orange">
-              {formatDayLabel(selectedDate)}
-            </Title>
-            <Tag color="app-yellow" size="small">
-              {daySummary.count} 笔 · 支 ¥{formatMoney(daySummary.expense)} · 收 ¥
-              {formatMoney(daySummary.income)}
-            </Tag>
+        <Card color="app-yellow" pattern="default" className="island-panel day-detail">
+          <div className="island-panel__head">
+            <div>
+              <SectionHeading tone="yellow">当日明细</SectionHeading>
+              <p className="island-panel__meta">
+                {formatDayLabel(selectedDate)} · {daySummary.count} 笔 · 支 ¥
+                {formatMoney(daySummary.expense)} · 收 ¥{formatMoney(daySummary.income)}
+              </p>
+            </div>
           </div>
 
-          <Card className="day-detail__card">
-            {dayItems.length === 0 ? (
-              <p className="history-day__empty">这一天没有记录</p>
-            ) : (
-              <div className="day-detail__list">
-                {dayItems.map((item) => (
-                  <div key={item.id} className="history-item">
-                    <div>
-                      <p className="history-item__category">
-                        {categoryMap[item.categoryId] || '未分类'}
-                        <Tag
-                          size="small"
-                          color={item.type === 'income' ? 'app-green' : 'app-red'}
-                        >
-                          {item.type === 'income' ? '收入' : '支出'}
-                        </Tag>
-                      </p>
-                      <p className="history-item__note">{item.note || '无备注'}</p>
-                    </div>
-                    <div className="history-item__side">
-                      <strong
-                        className={
-                          item.type === 'income' ? 'text-income' : 'text-expense'
-                        }
-                      >
-                        {item.type === 'income' ? '+' : '-'}
-                        {formatMoney(item.amount)}
-                      </strong>
-                      <Button
+          {dayItems.length === 0 ? (
+            <p className="empty-text">这一天没有记录</p>
+          ) : (
+            <div className="day-detail__list">
+              {dayItems.map((item) => (
+                <div key={item.id} className="history-item">
+                  <div>
+                    <p className="history-item__category">
+                      {categoryMap[item.categoryId] || '未分类'}
+                      <Tag
+                        color={item.type === 'income' ? 'app-teal' : 'app-red'}
                         size="small"
-                        danger
-                        onClick={() => deleteTransaction(item.id)}
                       >
-                        删除
-                      </Button>
-                    </div>
+                        {item.type === 'income' ? '收入' : '支出'}
+                      </Tag>
+                    </p>
+                    <p className="history-item__note">{item.note || '无备注'}</p>
                   </div>
-                ))}
-              </div>
-            )}
-          </Card>
-        </section>
+                  <div className="history-item__side">
+                    <strong
+                      className={
+                        item.type === 'income' ? 'text-income' : 'text-expense'
+                      }
+                    >
+                      {item.type === 'income' ? '+' : '-'}
+                      {formatMoney(item.amount)}
+                    </strong>
+                    <Button size="small" danger onClick={() => setConfirmId(item.id)}>
+                      删除
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
       )}
+
+      <Modal
+        open={Boolean(confirmId)}
+        title="删除记录"
+        typewriter={false}
+        onClose={() => setConfirmId('')}
+        footer={
+          <div className="form-actions">
+            <Button onClick={() => setConfirmId('')}>取消</Button>
+            <Button
+              type="primary"
+              danger
+              onClick={() => {
+                deleteTransaction(confirmId)
+                setConfirmId('')
+              }}
+            >
+              删除
+            </Button>
+          </div>
+        }
+      >
+        <p>确认删除这条记录？</p>
+      </Modal>
 
       <AddFab defaultDate={selectedDate || getToday()} />
     </div>

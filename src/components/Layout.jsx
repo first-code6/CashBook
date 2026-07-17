@@ -1,5 +1,12 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Button, Card, Time, Title } from 'animal-island-ui'
+import { Button } from 'animal-island-ui'
+
+const NAV = [
+  { to: '/', label: '首页', end: true },
+  { to: '/history', label: '月图' },
+  { to: '/charts', label: '图表' },
+  { to: '/settings', label: '设置' },
+]
 
 function NavButton({ to, end, children }) {
   return (
@@ -11,7 +18,7 @@ function NavButton({ to, end, children }) {
       }
     >
       {({ isActive }) => (
-        <Button type={isActive ? 'primary' : 'default'} block>
+        <Button type={isActive ? 'primary' : 'default'} block size="small">
           {children}
         </Button>
       )}
@@ -25,33 +32,17 @@ export default function Layout() {
       <div className="app-shell__bg" aria-hidden="true" />
 
       <div className="app-shell__frame">
-        <header className="app-header">
-          <Card color="app-teal" pattern="default" className="app-header__card">
-            <div className="app-header__row">
-              <div className="app-header__brand">
-                <Title size="large" color="app-green">
-                  小岛记账
-                </Title>
-              </div>
-              <div className="app-header__time">
-                <Time />
-              </div>
-            </div>
-          </Card>
-        </header>
-
-        <nav className="app-nav" aria-label="主导航">
-          <NavButton to="/" end>
-            首页
-          </NavButton>
-          <NavButton to="/history">月图</NavButton>
-          <NavButton to="/charts">图表</NavButton>
-          <NavButton to="/settings">设置</NavButton>
-        </nav>
-
         <main className="app-main">
           <Outlet />
         </main>
+
+        <nav className="app-nav" aria-label="主导航">
+          {NAV.map((item) => (
+            <NavButton key={item.to} to={item.to} end={item.end}>
+              {item.label}
+            </NavButton>
+          ))}
+        </nav>
       </div>
     </div>
   )

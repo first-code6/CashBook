@@ -1,4 +1,5 @@
-import { Card, Tag, Title } from 'animal-island-ui'
+import { Card, Tag } from 'animal-island-ui'
+import SectionHeading from './SectionHeading'
 import { formatCompactMoney, getToday } from '../lib/date'
 import { useCycleCalendarDays } from '../hooks/useCycleStats'
 
@@ -16,82 +17,76 @@ export default function MonthChart({
   const today = getToday()
 
   return (
-    <section className="section-block month-chart">
-      <div className="section-title section-title--stack">
-        <Title size="middle" color="app-teal">
-          月图
-        </Title>
-        <Tag color="app-orange" size="small">
-          {cycleRange}
-        </Tag>
+    <Card color="app-orange" pattern="default" className="island-panel month-chart">
+      <div className="island-panel__head">
+        <div>
+          <SectionHeading tone="orange">每日一览</SectionHeading>
+          <p className="island-panel__meta">{cycleRange}</p>
+        </div>
+        <div className="calendar-legend">
+          <Tag color="app-red" size="small">
+            支出
+          </Tag>
+          <Tag color="app-teal" size="small">
+            收入
+          </Tag>
+        </div>
       </div>
 
-      <Card color="warm-peach-pink" pattern="default" className="calendar-card">
-        <div className="calendar-legend">
-          <span className="calendar-legend__item calendar-legend__item--expense">
-            支出
-          </span>
-          <span className="calendar-legend__item calendar-legend__item--income">
-            收入
-          </span>
-        </div>
+      <div className="calendar-weekdays">
+        {WEEKDAYS.map((label) => (
+          <div key={label} className="calendar-weekday">
+            {label}
+          </div>
+        ))}
+      </div>
 
-        <div className="calendar-weekdays">
-          {WEEKDAYS.map((label) => (
-            <div key={label} className="calendar-weekday">
-              {label}
-            </div>
-          ))}
-        </div>
+      <div className="calendar-grid">
+        {cells.map((cell) => {
+          if (cell.empty) {
+            return <div key={cell.key} className="calendar-cell calendar-cell--empty" />
+          }
 
-        <div className="calendar-grid">
-          {cells.map((cell) => {
-            if (cell.empty) {
-              return <div key={cell.key} className="calendar-cell calendar-cell--empty" />
-            }
+          const isToday = cell.date === today
+          const isSelected = cell.date === selectedDate
+          const hasExpense = cell.expense > 0
+          const hasIncome = cell.income > 0
 
-            const isToday = cell.date === today
-            const isSelected = cell.date === selectedDate
-            const hasExpense = cell.expense > 0
-            const hasIncome = cell.income > 0
-
-            return (
-              <button
-                key={cell.key}
-                type="button"
-                className={[
-                  'calendar-cell',
-                  'calendar-cell--interactive',
-                  'calendar-cell--in-cycle',
-                  isToday ? 'calendar-cell--today' : '',
-                  isSelected ? 'calendar-cell--selected' : '',
-                  hasExpense || hasIncome ? 'calendar-cell--has-data' : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                onClick={() => onSelectDate?.(cell.date)}
-                aria-pressed={isSelected}
+          return (
+            <button
+              key={cell.key}
+              type="button"
+              className={[
+                'calendar-cell',
+                'calendar-cell--interactive',
+                isToday ? 'calendar-cell--today' : '',
+                isSelected ? 'calendar-cell--selected' : '',
+                hasExpense || hasIncome ? 'calendar-cell--has-data' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              onClick={() => onSelectDate?.(cell.date)}
+              aria-pressed={isSelected}
+            >
+              <span className="calendar-cell__day">{cell.day}</span>
+              <span
+                className={`calendar-cell__amount${
+                  hasExpense ? ' calendar-cell__amount--expense' : ''
+                }`}
               >
-                <span className="calendar-cell__day">{cell.day}</span>
-                <span
-                  className={`calendar-cell__amount${
-                    hasExpense ? ' calendar-cell__amount--expense' : ''
-                  }`}
-                >
-                  {hasExpense ? `-${formatCompactMoney(cell.expense)}` : '·'}
-                </span>
-                <span
-                  className={`calendar-cell__amount${
-                    hasIncome ? ' calendar-cell__amount--income' : ''
-                  }`}
-                >
-                  {hasIncome ? `+${formatCompactMoney(cell.income)}` : ''}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      </Card>
-    </section>
+                {hasExpense ? `-${formatCompactMoney(cell.expense)}` : '·'}
+              </span>
+              <span
+                className={`calendar-cell__amount${
+                  hasIncome ? ' calendar-cell__amount--income' : ''
+                }`}
+              >
+                {hasIncome ? `+${formatCompactMoney(cell.income)}` : ''}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </Card>
   )
 }

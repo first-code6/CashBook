@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Input, Modal } from 'animal-island-ui'
 import SegmentedControl from './SegmentedControl'
+import Select from './Select'
+import DatePicker from './DatePicker'
 import { useCashbook } from '../context/CashbookContext'
 import { getToday } from '../lib/date'
 import { yuanToFen } from '../lib/money'
@@ -19,7 +21,7 @@ export default function TransactionForm({ open, onClose, onSuccess, defaultDate 
     () =>
       state.categories
         .filter((item) => item.type === type)
-        .map((item) => ({ key: item.id, label: item.name })),
+        .map((item) => ({ value: item.id, label: item.name })),
     [state.categories, type],
   )
 
@@ -34,8 +36,8 @@ export default function TransactionForm({ open, onClose, onSuccess, defaultDate 
   }, [open, defaultDate])
 
   useEffect(() => {
-    if (!categoryOptions.some((item) => item.key === categoryId)) {
-      setCategoryId(categoryOptions[0]?.key || '')
+    if (!categoryOptions.some((item) => item.value === categoryId)) {
+      setCategoryId(categoryOptions[0]?.value || '')
     }
   }, [categoryOptions, categoryId])
 
@@ -119,37 +121,19 @@ export default function TransactionForm({ open, onClose, onSuccess, defaultDate 
           </div>
 
           <div className="form-field">
-            <label className="form-field__label" htmlFor="category">
-              分类
-            </label>
-            <select
-              id="category"
-              className="native-select"
+            <span className="form-field__label">分类</span>
+            <Select
+              ariaLabel="分类"
               value={categoryId}
-              onChange={(event) => setCategoryId(event.target.value)}
-            >
-              {categoryOptions.length === 0 ? (
-                <option value="">暂无分类</option>
-              ) : (
-                categoryOptions.map((item) => (
-                  <option key={item.key} value={item.key}>
-                    {item.label}
-                  </option>
-                ))
-              )}
-            </select>
+              onChange={setCategoryId}
+              options={categoryOptions}
+              placeholder="暂无分类"
+            />
           </div>
 
           <div className="form-field">
-            <label className="form-field__label" htmlFor="date">
-              日期
-            </label>
-            <Input
-              id="date"
-              type="date"
-              value={date}
-              onChange={(event) => setDate(event.target.value)}
-            />
+            <span className="form-field__label">日期</span>
+            <DatePicker value={date} onChange={setDate} />
           </div>
 
           <div className="form-field">

@@ -16,6 +16,7 @@ const tooltipStyle = {
   borderRadius: 12,
   border: '2px solid #d8c8b0',
   background: '#fff8ec',
+  boxShadow: '0 5px 0 rgba(90, 70, 40, 0.1)',
 }
 
 function useChartSize() {

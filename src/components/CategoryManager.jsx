@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Button, Card, Input, Title } from 'animal-island-ui'
+import { Button, Card, Input } from 'animal-island-ui'
+import SectionHeading from './SectionHeading'
 import { useCashbook } from '../context/CashbookContext'
 import { useAlertDialog } from '../hooks/useAlertDialog'
 
-function CategoryGroup({ title, type, categories, onAdd, onDelete, showAlert }) {
+function CategoryGroup({ title, tone, type, categories, onAdd, onDelete, showAlert }) {
   const [name, setName] = useState('')
 
   const handleAdd = () => {
@@ -21,18 +22,18 @@ function CategoryGroup({ title, type, categories, onAdd, onDelete, showAlert }) 
   }
 
   return (
-    <section className="settings-section">
-      <Title size="middle" color="app-teal">
-        {title}
-      </Title>
+    <Card color="app-teal" pattern="default" className="island-panel">
+      <div className="island-panel__head">
+        <SectionHeading tone={tone}>{title}</SectionHeading>
+      </div>
       <div className="category-group">
         {categories.map((item) => (
-          <Card key={item.id} className="category-row">
+          <div key={item.id} className="category-row">
             <p className="category-row__name">{item.name}</p>
             <Button size="small" danger onClick={() => onDelete(item.id)}>
               删除
             </Button>
-          </Card>
+          </div>
         ))}
       </div>
       <div className="category-add">
@@ -45,7 +46,7 @@ function CategoryGroup({ title, type, categories, onAdd, onDelete, showAlert }) 
           添加
         </Button>
       </div>
-    </section>
+    </Card>
   )
 }
 
@@ -71,9 +72,10 @@ export default function CategoryManager() {
   }
 
   return (
-    <div>
+    <div className="category-manager">
       <CategoryGroup
         title="支出分类"
+        tone="orange"
         type="expense"
         categories={expenseCategories}
         onAdd={addCategory}
@@ -82,6 +84,7 @@ export default function CategoryManager() {
       />
       <CategoryGroup
         title="收入分类"
+        tone="teal"
         type="income"
         categories={incomeCategories}
         onAdd={addCategory}

@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react'
-import { Button, Card, Modal, Title } from 'animal-island-ui'
+import { Button, Card, Modal } from 'animal-island-ui'
 import CategoryManager from '../components/CategoryManager'
 import CycleSettings from '../components/CycleSettings'
+import SectionHeading from '../components/SectionHeading'
 import { useCashbook } from '../context/CashbookContext'
 import { useAlertDialog } from '../hooks/useAlertDialog'
+import { APP_VERSION, checkForUpdate, openDownloadUrl } from '../lib/appUpdate'
 
 export default function SettingsPage() {
   const { exportData, importData } = useCashbook()
@@ -12,6 +14,30 @@ export default function SettingsPage() {
   const [importOpen, setImportOpen] = useState(false)
   const [pendingFile, setPendingFile] = useState(null)
   const [importing, setImporting] = useState(false)
+  const [checking, setChecking] = useState(false)
+  const [updateInfo, setUpdateInfo] = useState(null)
+  const [exporting, setExporting] = useState(false)
+
+  const handleCheckUpdate = async () => {
+    setChecking(true)
+    try {
+      const result = await checkForUpdate()
+      if (result.hasUpdate) {
+        setUpdateInfo(result)
+      } else {
+        showAlert(`当前已是最新版本（v${result.current}）`, {
+          title: '检查更新',
+          confirmText: '好的',
+        })
+      }
+    } catch (error) {
+      showAlert(error instanceof Error ? error.message : '检查更新失败', {
+        title: '检查更新',
+      })
+    } finally {
+      setChecking(false)
+    }
+  }
 
   const handlePickFile = (event) => {
     const file = event.target.files?.[0]
@@ -23,12 +49,33 @@ export default function SettingsPage() {
     setImportOpen(true)
   }
 
-  const handleExport = () => {
-    exportData()
-    showAlert('数据文件已开始下载', {
-      title: '导出成功',
-      confirmText: '好的',
-    })
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const result = await exportData()
+      if (result?.method === 'share') {
+        showAlert('请在系统分享面板中选择「保存到文件」或发送到其他应用', {
+          title: '导出成功',
+          confirmText: '好的',
+        })
+      } else if (result?.path) {
+        showAlert(`已保存到：\n${result.path}`, {
+          title: '导出成功',
+          confirmText: '好的',
+        })
+      } else {
+        showAlert('数据文件已开始下载', {
+          title: '导出成功',
+          confirmText: '好的',
+        })
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '导出失败'
+      if (message === '已取消导出') return
+      showAlert(message, { title: '导出失败' })
+    } finally {
+      setExporting(false)
+    }
   }
 
   const handleConfirmImport = async () => {
@@ -56,14 +103,12 @@ export default function SettingsPage() {
     <div className="page page--settings">
       <CycleSettings />
 
-      <section className="settings-section">
-        <div className="section-title">
-          <Title size="large" color="app-yellow">
-            数据管理
-          </Title>
+      <Card color="app-yellow" pattern="default" className="island-panel">
+        <div className="island-panel__head">
+          <SectionHeading tone="yellow">备份与恢复</SectionHeading>
         </div>
-        <Card color="app-yellow" pattern="default" className="data-actions">
-          <Button type="primary" block onClick={handleExport}>
+        <div className="data-actions">
+          <Button type="primary" block loading={exporting} onClick={handleExport}>
             导出数据文件
           </Button>
           <Button block onClick={() => fileInputRef.current?.click()}>
@@ -76,10 +121,46 @@ export default function SettingsPage() {
             hidden
             onChange={handlePickFile}
           />
-        </Card>
-      </section>
+        </div>
+      </Card>
 
       <CategoryManager />
+
+      <Card color="app-blue" pattern="default" className="island-panel island-panel--quiet">
+        <div className="settings-update__row">
+          <span className="settings-version">版本 v{APP_VERSION}</span>
+          <Button size="small" loading={checking} onClick={handleCheckUpdate}>
+            检查更新
+          </Button>
+        </div>
+      </Card>
+
+      <Modal
+        open={Boolean(updateInfo)}
+        title="发现新版本"
+        typewriter={false}
+        onClose={() => setUpdateInfo(null)}
+        footer={
+          <div className="form-actions">
+            <Button onClick={() => setUpdateInfo(null)}>稍后</Button>
+            <Button
+              type="primary"
+              onClick={() => {
+                if (updateInfo?.url) openDownloadUrl(updateInfo.url)
+                setUpdateInfo(null)
+              }}
+            >
+              下载
+            </Button>
+          </div>
+        }
+      >
+        <p className="settings-update-notes">
+          新版本 v{updateInfo?.latest}
+          {updateInfo?.notes ? `\n${updateInfo.notes}` : ''}
+          {!updateInfo?.url ? '\n暂无下载地址' : ''}
+        </p>
+      </Modal>
 
       <Modal
         open={importOpen}

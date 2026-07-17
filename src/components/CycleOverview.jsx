@@ -1,4 +1,5 @@
-import { Card, Progress, Tag, Title, Wallet } from 'animal-island-ui'
+import { Card, Tag } from 'animal-island-ui'
+import SectionHeading from './SectionHeading'
 import { formatMoney } from '../lib/money'
 
 export default function CycleOverview({
@@ -11,56 +12,50 @@ export default function CycleOverview({
   progress,
 }) {
   return (
-    <section className="section-block overview-block">
-      <div className="section-title section-title--stack">
-        <Title size="middle" color="app-green">
-          总概括
-        </Title>
-        <Tag color="app-teal" size="small">
-          {cycleLabel}
+    <Card color="app-teal" pattern="default" className="island-panel overview">
+      <div className="island-panel__head">
+        <div>
+          <SectionHeading tone="teal">账期概览</SectionHeading>
+          <p className="island-panel__meta">{cycleLabel}</p>
+        </div>
+        <Tag color="app-orange" size="small">
+          {cycleRange}
         </Tag>
       </div>
 
-      <Card color="app-green" pattern="default" className="overview-hero">
-        <div className="overview-hero__ribbon">{cycleRange}</div>
-
-        <div className="overview-hero__top">
-          <div>
-            <p className="overview-hero__eyebrow">本账期支出</p>
-            <Wallet value={formatMoney(expense)} size="large" />
-          </div>
-          <div className="overview-hero__meta">
-            <Tag color="app-yellow" size="small">
-              {count} 笔
-            </Tag>
-            <Tag color="warm-peach-pink" size="small">
-              进度 {progress}%
-            </Tag>
-          </div>
+      <div className="overview__hero">
+        <div>
+          <p className="overview__label">本账期支出</p>
+          <p className="overview__amount text-expense">¥{formatMoney(expense)}</p>
         </div>
-
-        <div className="overview-stats">
-          <div className="overview-stats__item overview-stats__item--income">
-            <span>收入</span>
-            <strong className="text-income">¥{formatMoney(income)}</strong>
-          </div>
-          <div className="overview-stats__item overview-stats__item--balance">
-            <span>结余</span>
-            <strong className="text-balance">¥{formatMoney(balance)}</strong>
-          </div>
-          <div className="overview-stats__item">
-            <span>账期进度</span>
-            <strong>{progress}%</strong>
-          </div>
+        <div className="overview__chips">
+          <Tag color="app-yellow" size="small">
+            {count} 笔
+          </Tag>
+          <Tag color="app-blue" size="small">
+            {progress}%
+          </Tag>
         </div>
+      </div>
 
-        <Progress
-          percent={progress}
-          size="large"
-          infoPosition="inside"
-          infoFormat={(value) => `${value}%`}
-        />
-      </Card>
-    </section>
+      <div className="stat-grid">
+        <div className="stat-grid__item stat-grid__item--income">
+          <span>收入</span>
+          <strong className="text-income">¥{formatMoney(income)}</strong>
+        </div>
+        <div className="stat-grid__item stat-grid__item--balance">
+          <span>结余</span>
+          <strong className="text-balance">¥{formatMoney(balance)}</strong>
+        </div>
+        <div className="stat-grid__item">
+          <span>进度</span>
+          <strong>{progress}%</strong>
+        </div>
+      </div>
+
+      <div className="progress" aria-label={`账期进度 ${progress}%`}>
+        <div className="progress__bar" style={{ width: `${Math.min(progress, 100)}%` }} />
+      </div>
+    </Card>
   )
 }

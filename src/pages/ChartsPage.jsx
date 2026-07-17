@@ -1,23 +1,22 @@
 import { useMemo, useState } from 'react'
-import { Card, Tag, Title, Wallet } from 'animal-island-ui'
+import { Card } from 'animal-island-ui'
 import AddFab from '../components/AddFab'
 import CategoryChart from '../components/CategoryChart'
+import SectionHeading from '../components/SectionHeading'
 import SegmentedControl from '../components/SegmentedControl'
 import { useCashbook } from '../context/CashbookContext'
 import { useCyclePieData } from '../hooks/useCycleStats'
 import { getToday } from '../lib/date'
 import { formatMoney } from '../lib/money'
 
-function ChartPanel({ title, color, data = [], total = 0, emptyText, chartType }) {
+function ChartPanel({ title, data = [], total = 0, emptyText, chartType }) {
   const slices = Array.isArray(data) ? data : []
 
   return (
-    <Card color={color} pattern="default" className="pie-panel">
-      <div className="pie-panel__head">
-        <Title size="middle" color={color === 'app-red' ? 'app-red' : 'app-green'}>
-          {title}
-        </Title>
-        <Wallet value={formatMoney(total)} size="small" />
+    <Card color="app-blue" pattern="default" className="island-panel pie-panel">
+      <div className="island-panel__head">
+        <SectionHeading tone="blue">{title}</SectionHeading>
+        <p className="island-panel__meta">¥{formatMoney(total)}</p>
       </div>
 
       {slices.length === 0 ? (
@@ -68,72 +67,69 @@ export default function ChartsPage() {
 
   return (
     <div className="page page--charts">
-      <section className="section-block">
-        <div className="section-title section-title--row">
-          <Title size="middle" color="app-yellow">
-            账期图表
-          </Title>
-          <Tag color="app-orange" size="small">
+      <Card color="app-yellow" pattern="default" className="island-panel charts-hero">
+        <div className="island-panel__head">
+          <div>
+            <SectionHeading tone="yellow">收支看板</SectionHeading>
+            <p className="island-panel__meta">{chartData.cycleLabel}</p>
+          </div>
+          <p className="island-panel__meta island-panel__meta--right">
             {chartData.cycleRange}
-          </Tag>
+          </p>
         </div>
 
-        <Card color="app-yellow" pattern="default" className="charts-hero">
-          <p className="charts-hero__label">{chartData.cycleLabel}</p>
-          <div className="charts-hero__stats">
-            <div>
-              <span>支出</span>
-              <strong className="text-expense">
-                ¥{formatMoney(chartData.expense?.total || 0)}
-              </strong>
-            </div>
-            <div>
-              <span>收入</span>
-              <strong className="text-income">
-                ¥{formatMoney(chartData.income?.total || 0)}
-              </strong>
-            </div>
-            <div>
-              <span>结余</span>
-              <strong className="text-balance">
-                ¥{formatMoney(chartData.balance || 0)}
-              </strong>
-            </div>
+        <div className="stat-grid">
+          <div className="stat-grid__item stat-grid__item--expense">
+            <span>支出</span>
+            <strong className="text-expense">
+              ¥{formatMoney(chartData.expense?.total || 0)}
+            </strong>
           </div>
+          <div className="stat-grid__item stat-grid__item--income">
+            <span>收入</span>
+            <strong className="text-income">
+              ¥{formatMoney(chartData.income?.total || 0)}
+            </strong>
+          </div>
+          <div className="stat-grid__item stat-grid__item--balance">
+            <span>结余</span>
+            <strong className="text-balance">
+              ¥{formatMoney(chartData.balance || 0)}
+            </strong>
+          </div>
+        </div>
 
-          <div className="charts-controls">
-            <div className="form-field">
-              <span className="form-field__label">数据类型</span>
-              <SegmentedControl
-                ariaLabel="数据类型"
-                value={mode}
-                onChange={setMode}
-                options={[
-                  { label: '支出分类', value: 'expense' },
-                  { label: '收入分类', value: 'income' },
-                ]}
-              />
-            </div>
-            <div className="form-field">
-              <span className="form-field__label">图表类型</span>
-              <SegmentedControl
-                ariaLabel="图表类型"
-                value={chartType}
-                onChange={setChartType}
-                options={[
-                  { label: '饼图', value: 'pie' },
-                  { label: '环形图', value: 'donut' },
-                  { label: '柱状图', value: 'bar' },
-                ]}
-              />
-            </div>
+        <div className="charts-controls">
+          <div className="form-field">
+            <span className="form-field__label">数据类型</span>
+            <SegmentedControl
+              ariaLabel="数据类型"
+              value={mode}
+              onChange={setMode}
+              options={[
+                { label: '支出', value: 'expense' },
+                { label: '收入', value: 'income' },
+              ]}
+            />
           </div>
-        </Card>
-      </section>
+          <div className="form-field">
+            <span className="form-field__label">图表类型</span>
+            <SegmentedControl
+              ariaLabel="图表类型"
+              value={chartType}
+              onChange={setChartType}
+              options={[
+                { label: '饼图', value: 'pie' },
+                { label: '环形', value: 'donut' },
+                { label: '柱状', value: 'bar' },
+              ]}
+            />
+          </div>
+        </div>
+      </Card>
 
       <ChartPanel
-        title={mode === 'expense' ? '支出构成' : '收入构成'}
-        color={mode === 'expense' ? 'app-red' : 'app-green'}
+        title={mode === 'expense' ? '花在哪里' : '钱从哪来'}
         data={active.slices}
         total={active.total}
         emptyText={
