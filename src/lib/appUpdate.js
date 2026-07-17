@@ -1,4 +1,5 @@
 import { env } from './env'
+import { openUrl } from '../platform'
 
 // 远程更新配置来自环境变量：
 //   VITE_APP_VERSION
@@ -63,20 +64,5 @@ export async function checkForUpdate() {
 // 打开下载链接（系统浏览器 / 下载器），下载后由用户手动安装 APK。
 export function openDownloadUrl(url) {
   if (!url) return
-  try {
-    const opener = typeof window !== 'undefined' ? window.__TAURI__?.opener : null
-    if (opener && typeof opener.openUrl === 'function') {
-      opener.openUrl(url)
-      return
-    }
-  } catch {
-    // fall through to window.open
-  }
-
-  if (typeof window !== 'undefined') {
-    const opened = window.open(url, '_blank', 'noopener')
-    if (!opened) {
-      window.location.href = url
-    }
-  }
+  void openUrl(url)
 }

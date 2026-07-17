@@ -1,4 +1,5 @@
 import { createInitialState, normalizeState } from './storage'
+import { isNative, revealItemInDir, writeTextFileWithFallback } from '../platform'
 
 export function validateImportData(data) {
   if (!data || typeof data !== 'object') {
@@ -41,10 +42,6 @@ export function validateImportData(data) {
   return normalizeState(data)
 }
 
-function isTauri() {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
-
 function buildFilename() {
   const now = new Date()
   const year = now.getFullYear()
@@ -68,55 +65,6 @@ async function tryShareFile(filename, content) {
   return true
 }
 
-async function writeWithFallback(filename, content) {
-  const { writeTextFile, BaseDirectory } = await import('@tauri-apps/plugin-fs')
-
-  const candidates = [
-    { baseDir: BaseDirectory.Download, label: '下载目录' },
-    { baseDir: BaseDirectory.AppDocument, label: '应用文档目录' },
-    { baseDir: BaseDirectory.AppData, label: '应用数据目录' },
-  ]
-
-  let lastError = null
-  for (const candidate of candidates) {
-    try {
-      await writeTextFile(filename, content, {
-        baseDir: candidate.baseDir,
-        create: true,
-      })
-
-      let fullPath = `${candidate.label}/${filename}`
-      try {
-        const pathApi = await import('@tauri-apps/api/path')
-        if (candidate.baseDir === BaseDirectory.Download && pathApi.downloadDir) {
-          fullPath = await pathApi.join(await pathApi.downloadDir(), filename)
-        } else if (
-          candidate.baseDir === BaseDirectory.AppDocument &&
-          pathApi.appDataDir
-        ) {
-          // AppDocument 在部分平台映射到 app data 下 documents
-          const root = pathApi.documentDir
-            ? await pathApi.documentDir()
-            : await pathApi.appDataDir()
-          fullPath = await pathApi.join(root, filename)
-        } else if (pathApi.appDataDir) {
-          fullPath = await pathApi.join(await pathApi.appDataDir(), filename)
-        }
-      } catch {
-        // keep label path
-      }
-
-      return { path: fullPath, method: 'file' }
-    } catch (error) {
-      lastError = error
-    }
-  }
-
-  throw lastError instanceof Error
-    ? lastError
-    : new Error('无法写入文件，请检查存储权限')
-}
-
 // 返回 { path, method }：web 触发下载；Android 优先系统分享，失败再写本地。
 export async function exportToFile(state) {
   const filename = buildFilename()
@@ -136,8 +84,8 @@ export async function exportToFile(state) {
     // 分享失败则继续走文件写入
   }
 
-  if (isTauri()) {
-    return writeWithFallback(filename, content)
+  if (isNative()) {
+    return writeTextFileWithFallback(filename, content)
   }
 
   const blob = new Blob([content], { type: 'application/json' })
@@ -153,13 +101,7 @@ export async function exportToFile(state) {
 
 // 尝试在文件管理器中定位导出的文件（Android 上可能不支持，忽略失败）。
 export async function revealExportedFile(path) {
-  if (!isTauri() || !path) return
-  try {
-    const { revealItemInDir } = await import('@tauri-apps/plugin-opener')
-    await revealItemInDir(path)
-  } catch {
-    // ignore
-  }
+  await revealItemInDir(path)
 }
 
 export function readImportFile(file) {
