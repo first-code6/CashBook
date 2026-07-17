@@ -1,10 +1,10 @@
 import { Button, Card } from 'animal-island-ui'
+import CategoryIcon from './CategoryIcon'
 import SectionHeading from './SectionHeading'
+import { getCategoryIconName, getCategoryPathLabel } from '../lib/categories'
 import { formatMoney } from '../lib/money'
 
 export default function TransactionList({ items, categories, onDelete }) {
-  const categoryMap = Object.fromEntries(categories.map((item) => [item.id, item.name]))
-
   if (items.length === 0) {
     return (
       <Card className="island-panel">
@@ -23,7 +23,11 @@ export default function TransactionList({ items, categories, onDelete }) {
           <div key={item.id} className="history-item">
             <div>
               <p className="history-item__category">
-                {categoryMap[item.categoryId] || '未分类'}
+                <CategoryIcon
+                  name={getCategoryIconName(categories, item.categoryId)}
+                  size={24}
+                />
+                {getCategoryPathLabel(categories, item.categoryId)}
               </p>
               <p className="history-item__note">
                 {item.date}

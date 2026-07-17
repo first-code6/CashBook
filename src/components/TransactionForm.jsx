@@ -5,6 +5,7 @@ import Select from './Select'
 import DatePicker from './DatePicker'
 import { useCashbook } from '../context/CashbookContext'
 import { getToday } from '../lib/date'
+import { getCategorySelectOptions } from '../lib/categories'
 import { yuanToFen } from '../lib/money'
 
 export default function TransactionForm({ open, onClose, onSuccess, defaultDate }) {
@@ -18,10 +19,7 @@ export default function TransactionForm({ open, onClose, onSuccess, defaultDate 
   const [errorMessage, setErrorMessage] = useState('')
 
   const categoryOptions = useMemo(
-    () =>
-      state.categories
-        .filter((item) => item.type === type)
-        .map((item) => ({ value: item.id, label: item.name })),
+    () => getCategorySelectOptions(state.categories, type),
     [state.categories, type],
   )
 

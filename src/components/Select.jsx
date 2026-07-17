@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
+import CategoryIcon from './CategoryIcon'
+
 export default function Select({
   value,
   options,
@@ -54,7 +56,14 @@ export default function Select({
         <span
           className={`ui-select__value${selected ? '' : ' ui-select__value--placeholder'}`}
         >
-          {selected ? selected.label : placeholder}
+          {selected ? (
+            <span className="ui-select__option-inner">
+              {selected.icon ? <CategoryIcon name={selected.icon} size={22} /> : null}
+              {selected.label}
+            </span>
+          ) : (
+            placeholder
+          )}
         </span>
         <span className="ui-select__arrow" aria-hidden="true" />
       </button>
@@ -70,10 +79,15 @@ export default function Select({
                 <li key={item.value} role="option" aria-selected={active}>
                   <button
                     type="button"
-                    className={`ui-select__option${active ? ' ui-select__option--active' : ''}`}
+                    className={`ui-select__option${active ? ' ui-select__option--active' : ''}${
+                      item.depth ? ' ui-select__option--child' : ''
+                    }`}
                     onClick={() => handleSelect(item.value)}
                   >
-                    {item.label}
+                    <span className="ui-select__option-inner">
+                      {item.icon ? <CategoryIcon name={item.icon} size={22} /> : null}
+                      {item.label}
+                    </span>
                   </button>
                 </li>
               )

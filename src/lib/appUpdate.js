@@ -1,10 +1,12 @@
-// 远程更新配置：把 UPDATE_MANIFEST_URL 指向你部署的版本信息 JSON。
+import { env } from './env'
+
+// 远程更新配置来自环境变量：
+//   VITE_APP_VERSION
+//   VITE_UPDATE_MANIFEST_URL
 // JSON 结构示例：
 // { "version": "0.2.0", "url": "https://your.host/jizhangben-0.2.0.apk", "notes": "更新内容" }
-//
-// APP_VERSION 需与 tauri.conf.json / tauri.properties 里的版本保持一致。
-export const APP_VERSION = '0.1.0'
-export const UPDATE_MANIFEST_URL = ''
+export const APP_VERSION = env.appVersion
+export const UPDATE_MANIFEST_URL = env.updateManifestUrl
 
 function parseVersion(version) {
   return String(version || '')
@@ -30,7 +32,7 @@ export function compareVersions(a, b) {
 // 返回 { hasUpdate, current, latest, url, notes }，无网络/未配置时抛出错误。
 export async function checkForUpdate() {
   if (!UPDATE_MANIFEST_URL) {
-    throw new Error('尚未配置更新地址（UPDATE_MANIFEST_URL）')
+    throw new Error('尚未配置更新地址（VITE_UPDATE_MANIFEST_URL）')
   }
 
   const response = await fetch(`${UPDATE_MANIFEST_URL}?t=${Date.now()}`, {

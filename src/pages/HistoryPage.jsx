@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { Button, Card, Modal, Tag } from 'animal-island-ui'
 import AddFab from '../components/AddFab'
+import CategoryIcon from '../components/CategoryIcon'
 import MonthChart from '../components/MonthChart'
 import SectionHeading from '../components/SectionHeading'
 import { useCashbook } from '../context/CashbookContext'
 import { useCycleOverview } from '../hooks/useCycleStats'
+import { getCategoryIconName, getCategoryPathLabel } from '../lib/categories'
 import { formatDayLabel, getToday } from '../lib/date'
 import { formatMoney } from '../lib/money'
 
@@ -16,11 +18,6 @@ export default function HistoryPage() {
   )
   const [selectedDate, setSelectedDate] = useState(getToday())
   const [confirmId, setConfirmId] = useState('')
-
-  const categoryMap = useMemo(
-    () => Object.fromEntries(state.categories.map((item) => [item.id, item.name])),
-    [state.categories],
-  )
 
   const dayItems = useMemo(() => {
     return state.transactions
@@ -73,7 +70,11 @@ export default function HistoryPage() {
                 <div key={item.id} className="history-item">
                   <div>
                     <p className="history-item__category">
-                      {categoryMap[item.categoryId] || '未分类'}
+                      <CategoryIcon
+                        name={getCategoryIconName(state.categories, item.categoryId)}
+                        size={24}
+                      />
+                      {getCategoryPathLabel(state.categories, item.categoryId)}
                       <Tag
                         color={item.type === 'income' ? 'app-teal' : 'app-red'}
                         size="small"

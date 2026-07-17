@@ -8,6 +8,7 @@ import {
   listDatesDescending,
   listDatesInclusive,
 } from '../lib/billingCycle'
+import { getCategoryPathLabel } from '../lib/categories'
 import { getToday } from '../lib/date'
 
 function summarize(items) {
@@ -156,7 +157,6 @@ export function useCyclePieData(transactions, categories, cycleStartDay) {
     const items = transactions.filter((item) =>
       isDateInRange(item.date, cycle.start, cycle.end),
     )
-    const categoryMap = Object.fromEntries(categories.map((item) => [item.id, item]))
 
     const buildSlices = (type) => {
       const totals = {}
@@ -168,7 +168,7 @@ export function useCyclePieData(transactions, categories, cycleStartDay) {
       const slices = Object.entries(totals)
         .map(([categoryId, value], index) => ({
           categoryId,
-          name: categoryMap[categoryId]?.name || '未分类',
+          name: getCategoryPathLabel(categories, categoryId),
           value,
           fill: PIE_COLORS[index % PIE_COLORS.length],
         }))

@@ -1,4 +1,5 @@
 import { DEFAULT_CATEGORIES } from '../data/defaultCategories'
+import { normalizeCategory, repairCategoryTree } from './categories'
 import { normalizeCycleStartDay } from './billingCycle'
 
 const STORAGE_KEY = 'cashbook.v1'
@@ -15,22 +16,33 @@ export function createInitialState() {
   }
 }
 
+/** Fill in missing default categories (parents first, then children). */
+function mergeDefaultCategoryTree(categories) {
+  const byId = new Set(categories.map((item) => item.id))
+  const extras = []
+
+  for (const preset of DEFAULT_CATEGORIES) {
+    if (preset.parentId || byId.has(preset.id)) continue
+    extras.push({ ...preset })
+    byId.add(preset.id)
+  }
+
+  for (const preset of DEFAULT_CATEGORIES) {
+    if (!preset.parentId || byId.has(preset.id)) continue
+    if (!byId.has(preset.parentId)) continue
+    extras.push({ ...preset })
+    byId.add(preset.id)
+  }
+
+  return extras.length > 0 ? [...categories, ...extras] : categories
+}
+
 function sanitizeCategories(categories, fallback) {
   if (!Array.isArray(categories)) return fallback
 
-  const cleaned = categories
-    .filter(
-      (item) =>
-        item &&
-        typeof item.id === 'string' &&
-        typeof item.name === 'string' &&
-        (item.type === 'income' || item.type === 'expense'),
-    )
-    .map((item) => ({
-      id: item.id,
-      name: item.name,
-      type: item.type,
-    }))
+  const cleaned = repairCategoryTree(
+    mergeDefaultCategoryTree(categories.map(normalizeCategory).filter(Boolean)),
+  )
 
   return cleaned.length > 0 ? cleaned : fallback
 }
