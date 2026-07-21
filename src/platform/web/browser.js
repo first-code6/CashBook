@@ -11,6 +11,14 @@ export async function openUrl(url) {
   return true
 }
 
+export async function getNativeAppVersion() {
+  return ''
+}
+
+export async function downloadAndInstallApk() {
+  throw new Error('浏览器环境请直接下载 APK 后手动安装')
+}
+
 export async function writeTextFileWithFallback() {
   throw new Error('当前环境不支持原生文件写入')
 }

@@ -1,6 +1,5 @@
 /**
- * Tauri 实现层：所有 @tauri-apps/* 依赖只允许出现在本目录。
- * 若不再使用 Tauri，删除本文件并改 platform/index.js 的路由即可。
+ * Tauri 实现层：所有 @tauri-apps/* / 原生插件依赖只允许出现在本目录。
  */
 import { isTauriRuntime } from '../detect'
 
@@ -27,6 +26,60 @@ export async function openUrl(url) {
 }
 
 /**
+ * 读取原生壳版本（与 tauri.conf.json / Android versionName 一致）。
+ */
+export async function getNativeAppVersion() {
+  if (!isTauriRuntime()) return ''
+  try {
+    const { getVersion } = await import('@tauri-apps/api/app')
+    return (await getVersion()) || ''
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * Android：下载 APK 到应用缓存，并调起系统安装器。
+ * @param {string} url
+ * @param {(percent: number) => void} [onProgress]
+ * @returns {Promise<{ path: string }>}
+ */
+export async function downloadAndInstallApk(url, onProgress) {
+  if (!url || !isTauriRuntime()) {
+    throw new Error('当前环境不支持应用内安装')
+  }
+
+  const { download } = await import('@tauri-apps/plugin-upload')
+  const { appCacheDir, join } = await import('@tauri-apps/api/path')
+  const {
+    canInstall,
+    requestInstallPermission,
+    install,
+  } = await import('tauri-plugin-android-installer-api')
+
+  const path = await join(await appCacheDir(), `cashbook-update-${Date.now()}.apk`)
+
+  await download(url, path, (payload) => {
+    if (!onProgress) return
+    const total = Number(payload?.total || 0)
+    const done = Number(payload?.progressTotal || 0)
+    if (total > 0) {
+      onProgress(Math.min(100, Math.round((done / total) * 100)))
+    }
+  })
+
+  if (!(await canInstall())) {
+    await requestInstallPermission()
+    if (!(await canInstall())) {
+      throw new Error('请允许本应用安装未知应用后，再继续更新')
+    }
+  }
+
+  await install(path)
+  return { path }
+}
+
+/**
  * 写入文本文件，按候选目录依次尝试。
  * @returns {Promise<{ path: string, method: 'file' }>}
  */
@@ -40,47 +93,22 @@ export async function writeTextFileWithFallback(filename, content) {
   ]
 
   let lastError = null
-  for (const candidate of candidates) {
+  for (const item of candidates) {
     try {
-      await writeTextFile(filename, content, {
-        baseDir: candidate.baseDir,
-        create: true,
-      })
-
-      let fullPath = `${candidate.label}/${filename}`
-      try {
-        const pathApi = await import('@tauri-apps/api/path')
-        if (candidate.baseDir === BaseDirectory.Download && pathApi.downloadDir) {
-          fullPath = await pathApi.join(await pathApi.downloadDir(), filename)
-        } else if (
-          candidate.baseDir === BaseDirectory.AppDocument &&
-          pathApi.documentDir
-        ) {
-          const root = await pathApi.documentDir()
-          fullPath = await pathApi.join(root, filename)
-        } else if (pathApi.appDataDir) {
-          fullPath = await pathApi.join(await pathApi.appDataDir(), filename)
-        }
-      } catch {
-        // keep label path
-      }
-
-      return { path: fullPath, method: 'file' }
+      await writeTextFile(filename, content, { baseDir: item.baseDir })
+      return { path: `${item.label}/${filename}`, method: 'file' }
     } catch (error) {
       lastError = error
     }
   }
 
-  throw lastError instanceof Error
-    ? lastError
-    : new Error('无法写入文件，请检查存储权限')
+  throw lastError instanceof Error ? lastError : new Error('无法写入文件')
 }
 
 export async function revealItemInDir(path) {
-  if (!path || !isTauriRuntime()) return false
   try {
-    const { revealItemInDir } = await import('@tauri-apps/plugin-opener')
-    await revealItemInDir(path)
+    const { revealItemInDir: reveal } = await import('@tauri-apps/plugin-opener')
+    await reveal(path)
     return true
   } catch {
     return false

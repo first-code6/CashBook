@@ -1,23 +1,28 @@
 {
   "name": "cashbook",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "android:signing": "node scripts/sync-android-signing.mjs",
+    "android:build": "node scripts/sync-android-signing.mjs && pnpm tauri android build"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-fs": "^2.5.1",
+    "@tauri-apps/plugin-http": "^2.5.9",
     "@tauri-apps/plugin-opener": "^2.5.4",
+    "@tauri-apps/plugin-upload": "^2.4.0",
     "animal-island-ui": "^1.2.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.1",
-    "recharts": "^3.9.2"
+    "recharts": "^3.9.2",
+    "tauri-plugin-android-installer-api": "^0.1.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.11.4",

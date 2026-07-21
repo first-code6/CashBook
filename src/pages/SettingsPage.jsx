@@ -1,11 +1,16 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button, Card, Modal } from 'animal-island-ui'
 import CategoryManager from '../components/CategoryManager'
 import CycleSettings from '../components/CycleSettings'
 import SectionHeading from '../components/SectionHeading'
 import { useCashbook } from '../context/CashbookContext'
 import { useAlertDialog } from '../hooks/useAlertDialog'
-import { APP_VERSION, checkForUpdate, openDownloadUrl } from '../lib/appUpdate'
+import {
+  applyUpdate,
+  checkForUpdate,
+  getCurrentAppVersion,
+} from '../lib/appUpdate'
+import { isNative } from '../platform'
 
 export default function SettingsPage() {
   const { exportData, importData } = useCashbook()
@@ -17,13 +22,28 @@ export default function SettingsPage() {
   const [checking, setChecking] = useState(false)
   const [updateInfo, setUpdateInfo] = useState(null)
   const [exporting, setExporting] = useState(false)
+  const [displayVersion, setDisplayVersion] = useState('')
+  const [updating, setUpdating] = useState(false)
+  const [updateProgress, setUpdateProgress] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    getCurrentAppVersion().then((version) => {
+      if (!cancelled) setDisplayVersion(version)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const handleCheckUpdate = async () => {
     setChecking(true)
     try {
       const result = await checkForUpdate()
+      setDisplayVersion(result.current)
       if (result.hasUpdate) {
         setUpdateInfo(result)
+        setUpdateProgress(0)
       } else {
         showAlert(`当前已是最新版本（v${result.current}）`, {
           title: '检查更新',
@@ -36,6 +56,33 @@ export default function SettingsPage() {
       })
     } finally {
       setChecking(false)
+    }
+  }
+
+  const handleApplyUpdate = async () => {
+    if (!updateInfo?.url) {
+      showAlert('暂无下载地址', { title: '更新失败' })
+      return
+    }
+
+    setUpdating(true)
+    setUpdateProgress(0)
+    try {
+      await applyUpdate(updateInfo.url, setUpdateProgress)
+      if (!isNative()) {
+        setUpdateInfo(null)
+        showAlert('已打开下载链接，请下载完成后手动安装', {
+          title: '开始下载',
+          confirmText: '好的',
+        })
+      }
+      // Android：安装器调起后进程可能被替换，不一定执行到这里
+    } catch (error) {
+      showAlert(error instanceof Error ? error.message : '更新失败', {
+        title: '更新失败',
+      })
+    } finally {
+      setUpdating(false)
     }
   }
 
@@ -128,7 +175,9 @@ export default function SettingsPage() {
 
       <Card color="app-blue" pattern="default" className="island-panel island-panel--quiet">
         <div className="settings-update__row">
-          <span className="settings-version">版本 v{APP_VERSION}</span>
+          <span className="settings-version">
+            版本 v{displayVersion || '…'}
+          </span>
           <Button size="small" loading={checking} onClick={handleCheckUpdate}>
             检查更新
           </Button>
@@ -139,27 +188,45 @@ export default function SettingsPage() {
         open={Boolean(updateInfo)}
         title="发现新版本"
         typewriter={false}
-        onClose={() => setUpdateInfo(null)}
+        onClose={() => {
+          if (updating) return
+          setUpdateInfo(null)
+        }}
         footer={
           <div className="form-actions">
-            <Button onClick={() => setUpdateInfo(null)}>稍后</Button>
-            <Button
-              type="primary"
-              onClick={() => {
-                if (updateInfo?.url) openDownloadUrl(updateInfo.url)
-                setUpdateInfo(null)
-              }}
-            >
-              下载
+            <Button disabled={updating} onClick={() => setUpdateInfo(null)}>
+              稍后
+            </Button>
+            <Button type="primary" loading={updating} onClick={handleApplyUpdate}>
+              {isNative() ? '下载并安装' : '下载'}
             </Button>
           </div>
         }
       >
-        <p className="settings-update-notes">
-          新版本 v{updateInfo?.latest}
-          {updateInfo?.notes ? `\n${updateInfo.notes}` : ''}
-          {!updateInfo?.url ? '\n暂无下载地址' : ''}
-        </p>
+        <div className="settings-update-body">
+          <p className="settings-update-notes">
+            新版本 v{updateInfo?.latest}
+            {updateInfo?.current ? `（当前 v${updateInfo.current}）` : ''}
+            {updateInfo?.notes ? `\n${updateInfo.notes}` : ''}
+            {!updateInfo?.url ? '\n暂无下载地址' : ''}
+            {isNative()
+              ? '\n\n下载完成后将自动打开系统安装界面。'
+              : ''}
+          </p>
+          {updating ? (
+            <div className="update-progress" aria-label={`下载进度 ${updateProgress}%`}>
+              <div className="update-progress__track">
+                <div
+                  className="update-progress__bar"
+                  style={{ width: `${updateProgress}%` }}
+                />
+              </div>
+              <p className="update-progress__text">
+                {updateProgress >= 100 ? '正在调起安装…' : `下载中 ${updateProgress}%`}
+              </p>
+            </div>
+          ) : null}
+        </div>
       </Modal>
 
       <Modal

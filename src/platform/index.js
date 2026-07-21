@@ -3,10 +3,6 @@
  *
  * 业务代码只从这里导入，例如：
  *   import { isNative, openUrl, writeTextFileWithFallback } from '../platform'
- *
- * 以后若不用 Tauri：
- *   1. 删掉 platform/tauri/
- *   2. 把本文件里的 native 路由改成新实现（或始终走 web）
  */
 import { isNativeRuntime, isTauriRuntime } from './detect'
 import * as tauri from './tauri/native'
@@ -21,6 +17,14 @@ function impl() {
 
 export function openUrl(url) {
   return impl().openUrl(url)
+}
+
+export function getNativeAppVersion() {
+  return impl().getNativeAppVersion()
+}
+
+export function downloadAndInstallApk(url, onProgress) {
+  return impl().downloadAndInstallApk(url, onProgress)
 }
 
 export function writeTextFileWithFallback(filename, content) {

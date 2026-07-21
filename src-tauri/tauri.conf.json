@@ -1,18 +1,18 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "cashbook",
+  "productName": "记账本",
   "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "com.cashbook.app",
   "build": {
-    "frontendDist": "./dist",
-    "devUrl": "http://localhost:5173",
+    "frontendDist": "../dist",
+    "devUrl": "http://127.0.0.1:3000",
     "beforeDevCommand": "pnpm dev",
     "beforeBuildCommand": "pnpm build"
   },
   "app": {
     "windows": [
       {
-        "title": "cashbook",
+        "title": "记账本",
         "width": 800,
         "height": 600,
         "resizable": true,

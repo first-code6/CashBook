@@ -17,6 +17,12 @@ dist-ssr
 .env.*.local
 .env
 
+# Android 签名（密钥与生成的 properties 不提交）
+*.keystore
+*.jks
+src-tauri/keys/
+src-tauri/gen/android/keystore.properties
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

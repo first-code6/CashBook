@@ -1,9 +1,14 @@
 import { env } from './env'
-import { openUrl } from '../platform'
+import {
+  downloadAndInstallApk,
+  getNativeAppVersion,
+  isNative,
+  openUrl,
+} from '../platform'
 
 // 远程更新配置来自环境变量：
-//   VITE_APP_VERSION
-//   VITE_UPDATE_MANIFEST_URL
+//   VITE_APP_VERSION          —— 构建期版本（应与 tauri.conf.json version 一致）
+//   VITE_UPDATE_MANIFEST_URL  —— 远程 update.json
 // JSON 结构示例：
 // { "version": "0.2.0", "url": "https://your.host/jizhangben-0.2.0.apk", "notes": "更新内容" }
 export const APP_VERSION = env.appVersion
@@ -29,12 +34,24 @@ export function compareVersions(a, b) {
   return 0
 }
 
+/**
+ * 当前运行版本：
+ * - Android / Tauri：优先用原生 getVersion()（= tauri.conf.json / versionName）
+ * - Web：回退 VITE_APP_VERSION
+ */
+export async function getCurrentAppVersion() {
+  const native = await getNativeAppVersion()
+  return (native || APP_VERSION || '0.0.0').trim()
+}
+
 // 拉取远程版本信息并与当前版本比较。
 // 返回 { hasUpdate, current, latest, url, notes }，无网络/未配置时抛出错误。
 export async function checkForUpdate() {
   if (!UPDATE_MANIFEST_URL) {
     throw new Error('尚未配置更新地址（VITE_UPDATE_MANIFEST_URL）')
   }
+
+  const current = await getCurrentAppVersion()
 
   const response = await fetch(`${UPDATE_MANIFEST_URL}?t=${Date.now()}`, {
     method: 'GET',
@@ -50,15 +67,33 @@ export async function checkForUpdate() {
     throw new Error('更新信息格式不正确')
   }
 
-  const hasUpdate = compareVersions(data.version, APP_VERSION) > 0
+  const hasUpdate = compareVersions(data.version, current) > 0
 
   return {
     hasUpdate,
-    current: APP_VERSION,
+    current,
     latest: data.version,
     url: typeof data.url === 'string' ? data.url : '',
     notes: typeof data.notes === 'string' ? data.notes : '',
   }
+}
+
+/**
+ * 执行更新：
+ * - Android 原生：下载 APK → 申请安装权限 → 调起系统安装界面
+ * - 其他环境：打开下载链接，由用户手动安装
+ *
+ * 注意：Android 不允许完全静默安装，系统安装确认框无法跳过。
+ */
+export async function applyUpdate(url, onProgress) {
+  if (!url) throw new Error('暂无下载地址')
+
+  if (isNative()) {
+    return downloadAndInstallApk(url, onProgress)
+  }
+
+  await openUrl(url)
+  return { method: 'browser' }
 }
 
 // 打开下载链接（系统浏览器 / 下载器），下载后由用户手动安装 APK。
