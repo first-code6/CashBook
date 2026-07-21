@@ -21,7 +21,10 @@ dist-ssr
 *.keystore
 *.jks
 src-tauri/keys/
-src-tauri/gen/android/keystore.properties
+
+# Tauri 原生构建产物与生成工程（详见 src-tauri/.gitignore）
+src-tauri/target/
+src-tauri/gen/
 
 # Editor directories and files
 .vscode/*

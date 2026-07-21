@@ -7,9 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview",
-    "android:signing": "node scripts/sync-android-signing.mjs",
-    "android:build": "node scripts/sync-android-signing.mjs && pnpm tauri android build"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",
