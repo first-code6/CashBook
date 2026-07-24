@@ -6,6 +6,31 @@ export function getToday() {
   return `${year}-${month}-${day}`
 }
 
+export function toMonthKey(dateKey = getToday()) {
+  return String(dateKey || getToday()).slice(0, 7)
+}
+
+export function shiftMonth(month, delta) {
+  const [year, monthValue] = month.split('-').map(Number)
+  const base = new Date(year, monthValue - 1 + delta, 1)
+  const nextYear = base.getFullYear()
+  const nextMonth = String(base.getMonth() + 1).padStart(2, '0')
+  return `${nextYear}-${nextMonth}`
+}
+
+export function getMonthBounds(month) {
+  const days = getDaysInMonth(month)
+  return {
+    start: buildDateKey(month, 1),
+    end: buildDateKey(month, days),
+  }
+}
+
+export function formatMonthLabel(month) {
+  const [year, monthValue] = month.split('-')
+  return `${year}年${Number(monthValue)}月`
+}
+
 export function getDaysInMonth(month) {
   const [year, monthValue] = month.split('-').map(Number)
   return new Date(year, monthValue, 0).getDate()

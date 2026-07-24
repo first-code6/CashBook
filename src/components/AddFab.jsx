@@ -46,7 +46,7 @@ export default function AddFab({ defaultDate }) {
       >
         <div className="success-dialog">
           <p>
-            已记录一笔
+                已记录一笔
             {successInfo?.type === 'income' ? '收入' : '支出'}
             {successInfo ? ` ¥${formatMoney(successInfo.amount)}` : ''}
           </p>

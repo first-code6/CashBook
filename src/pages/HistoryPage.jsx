@@ -1,25 +1,29 @@
 import { useMemo, useState } from 'react'
-import { Button, Card, Modal, Tag } from 'animal-island-ui'
+import { Button, Card, Modal } from 'animal-island-ui'
 import AddFab from '../components/AddFab'
-import CategoryIcon from '../components/CategoryIcon'
 import MonthChart from '../components/MonthChart'
 import SectionHeading from '../components/SectionHeading'
+import TransactionDayList from '../components/TransactionDayList'
+import TransactionForm from '../components/TransactionForm'
 import { useCashbook } from '../context/CashbookContext'
 import { useCycleOverview } from '../hooks/useCycleStats'
-import { getCategoryIconName, getCategoryPathLabel } from '../lib/categories'
+import { getCurrentCycle, isDateInRange, shiftCycle } from '../lib/billingCycle'
 import { formatDayLabel, getToday } from '../lib/date'
 import { formatMoney } from '../lib/money'
 
 export default function HistoryPage() {
   const { state, deleteTransaction } = useCashbook()
-  const overview = useCycleOverview(
-    state.transactions,
-    state.settings.cycleStartDay,
-  )
-  const [selectedDate, setSelectedDate] = useState(getToday())
+  const today = getToday()
+  const cycleStartDay = state.settings.cycleStartDay
+  const [viewAnchor, setViewAnchor] = useState(() => getCurrentCycle(cycleStartDay, today).start)
+  const [selectedDate, setSelectedDate] = useState(today)
   const [confirmId, setConfirmId] = useState('')
+  const [editing, setEditing] = useState(null)
+
+  const overview = useCycleOverview(state.transactions, cycleStartDay, viewAnchor)
 
   const dayItems = useMemo(() => {
+    if (!selectedDate) return []
     return state.transactions
       .filter((item) => item.date === selectedDate)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -39,15 +43,27 @@ export default function HistoryPage() {
     setSelectedDate((current) => (current === date ? '' : date))
   }
 
+  const handleCycleChange = (delta) => {
+    const next = shiftCycle(overview.cycle, delta, cycleStartDay)
+    setViewAnchor(next.start)
+    setSelectedDate((current) => {
+      if (!current) return current
+      return isDateInRange(current, next.start, next.end) ? current : ''
+    })
+  }
+
   return (
     <div className="page page--history">
       <MonthChart
         cycleStart={overview.cycle.start}
         cycleEnd={overview.cycle.end}
-        dailyMap={overview.dailyMap}
+        cycleLabel={overview.cycleLabel}
         cycleRange={overview.cycleRange}
+        dailyMap={overview.dailyMap}
         selectedDate={selectedDate}
         onSelectDate={handleSelectDate}
+        onCycleChange={handleCycleChange}
+        canGoNext={overview.canGoNext}
       />
 
       {selectedDate && (
@@ -62,47 +78,20 @@ export default function HistoryPage() {
             </div>
           </div>
 
-          {dayItems.length === 0 ? (
-            <p className="empty-text">这一天没有记录</p>
-          ) : (
-            <div className="day-detail__list">
-              {dayItems.map((item) => (
-                <div key={item.id} className="history-item">
-                  <div>
-                    <p className="history-item__category">
-                      <CategoryIcon
-                        name={getCategoryIconName(state.categories, item.categoryId)}
-                        size={24}
-                      />
-                      {getCategoryPathLabel(state.categories, item.categoryId)}
-                      <Tag
-                        color={item.type === 'income' ? 'app-teal' : 'app-red'}
-                        size="small"
-                      >
-                        {item.type === 'income' ? '收入' : '支出'}
-                      </Tag>
-                    </p>
-                    <p className="history-item__note">{item.note || '无备注'}</p>
-                  </div>
-                  <div className="history-item__side">
-                    <strong
-                      className={
-                        item.type === 'income' ? 'text-income' : 'text-expense'
-                      }
-                    >
-                      {item.type === 'income' ? '+' : '-'}
-                      {formatMoney(item.amount)}
-                    </strong>
-                    <Button size="small" danger onClick={() => setConfirmId(item.id)}>
-                      删除
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <TransactionDayList
+            items={dayItems}
+            categories={state.categories}
+            onEdit={setEditing}
+            onDelete={setConfirmId}
+          />
         </Card>
       )}
+
+      <TransactionForm
+        open={Boolean(editing)}
+        transaction={editing}
+        onClose={() => setEditing(null)}
+      />
 
       <Modal
         open={Boolean(confirmId)}
@@ -128,7 +117,7 @@ export default function HistoryPage() {
         <p>确认删除这条记录？</p>
       </Modal>
 
-      <AddFab defaultDate={selectedDate || getToday()} />
+      <AddFab defaultDate={selectedDate || today} />
     </div>
   )
 }

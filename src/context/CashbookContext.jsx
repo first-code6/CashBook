@@ -84,6 +84,26 @@ export function CashbookProvider({ children }) {
     [commit],
   )
 
+  const updateTransaction = useCallback(
+    (id, payload) => {
+      commit((prev) => ({
+        transactions: prev.transactions.map((item) => {
+          if (item.id !== id) return item
+          return {
+            ...item,
+            type: payload.type,
+            amount: payload.amount,
+            categoryId: payload.categoryId,
+            note: payload.note || '',
+            date: payload.date,
+            updatedAt: new Date().toISOString(),
+          }
+        }),
+      }))
+    },
+    [commit],
+  )
+
   const addCategory = useCallback(
     ({ name, type, parentId = null, icon = 'other' }) => {
       const trimmed = name.trim()
@@ -212,6 +232,7 @@ export function CashbookProvider({ children }) {
     () => ({
       state,
       addTransaction,
+      updateTransaction,
       deleteTransaction,
       addCategory,
       updateCategory,
@@ -223,6 +244,7 @@ export function CashbookProvider({ children }) {
     [
       state,
       addTransaction,
+      updateTransaction,
       deleteTransaction,
       addCategory,
       updateCategory,
