@@ -11,6 +11,10 @@ export async function openUrl(url) {
   return true
 }
 
+export async function nativeFetch() {
+  return null
+}
+
 export async function getNativeAppVersion() {
   return ''
 }

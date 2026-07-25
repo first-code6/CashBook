@@ -19,6 +19,10 @@ export function openUrl(url) {
   return impl().openUrl(url)
 }
 
+export function nativeFetch(url, init) {
+  return impl().nativeFetch?.(url, init) ?? null
+}
+
 export function getNativeAppVersion() {
   return impl().getNativeAppVersion()
 }

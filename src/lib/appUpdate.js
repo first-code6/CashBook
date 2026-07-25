@@ -3,6 +3,7 @@ import {
   downloadAndInstallApk,
   getNativeAppVersion,
   isNative,
+  nativeFetch,
   openUrl,
 } from '../platform'
 
@@ -52,11 +53,17 @@ export async function checkForUpdate() {
   }
 
   const current = await getCurrentAppVersion()
+  const manifestUrl = `${UPDATE_MANIFEST_URL}?t=${Date.now()}`
+  const requestInit = { method: 'GET', cache: 'no-store' }
 
-  const response = await fetch(`${UPDATE_MANIFEST_URL}?t=${Date.now()}`, {
-    method: 'GET',
-    cache: 'no-store',
-  })
+  // Android / Tauri：用插件 HTTP，避免 WebView CORS 导致 Failed to fetch
+  let response
+  try {
+    response = (await nativeFetch(manifestUrl, requestInit)) || (await fetch(manifestUrl, requestInit))
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    throw new Error(`检查更新失败：${message || '网络请求被拒绝'}`)
+  }
 
   if (!response.ok) {
     throw new Error(`检查更新失败（${response.status}）`)

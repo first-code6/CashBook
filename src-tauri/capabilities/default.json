@@ -7,7 +7,13 @@
     "core:default",
     "opener:default",
     "fs:default",
-    "http:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        { "url": "https://xiaoyujiayan.com/*" },
+        { "url": "https://*.xiaoyujiayan.com/*" }
+      ]
+    },
     "upload:default",
     "android-installer:default"
   ]

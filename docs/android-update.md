@@ -64,5 +64,16 @@
 # src-tauri 的上一级（仓库根，有 package.json 的那层），不要用 src-tauri。
 # 重新执行 `tauri android init` 后若被覆盖，需再改一次。
 #
+# ### 图标
+# 源图：src-tauri/icons/icon.png（建议 1024x1024）
+# 生成各平台图标（含 Android mipmap）：
+#   pnpm tauri icon src-tauri/icons/icon.png
+# 然后重新打包安装。
+#
+# ### 检查更新 Failed to fetch
+# 原生侧走 tauri-plugin-http（capabilities 需允许更新域名）。
+# Nginx 的 Content-Type 应为 application/json（勿写成 appllcation/json）。
+# 并建议加：Access-Control-Allow-Origin *
+#
 # Google Play：REQUEST_INSTALL_PACKAGES 属敏感权限，自托管分发可用；
 # 若上架 Play，请确认政策或改走 Play 内更新。

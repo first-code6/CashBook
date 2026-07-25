@@ -26,6 +26,15 @@ export async function openUrl(url) {
 }
 
 /**
+ * 原生侧 HTTP（绕过 WebView CORS）。Web 环境返回 null，由调用方回退 window.fetch。
+ */
+export async function nativeFetch(url, init) {
+  if (!isTauriRuntime()) return null
+  const { fetch } = await import('@tauri-apps/plugin-http')
+  return fetch(url, init)
+}
+
+/**
  * 读取原生壳版本（与 tauri.conf.json / Android versionName 一致）。
  */
 export async function getNativeAppVersion() {
