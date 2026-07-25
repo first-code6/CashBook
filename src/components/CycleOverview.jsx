@@ -10,6 +10,8 @@ export default function CycleOverview({
   balance,
   count,
   progress,
+  todayExpense,
+  todayCount,
 }) {
   return (
     <Card color="app-teal" pattern="default" className="island-panel overview">
@@ -23,19 +25,26 @@ export default function CycleOverview({
         </Tag>
       </div>
 
-      <div className="overview__hero">
+      <div className="overview__hero overview__hero--today">
         <div>
-          <p className="overview__label">本账期支出</p>
-          <p className="overview__amount text-expense">¥{formatMoney(expense)}</p>
+          <p className="overview__label">今日开销</p>
+          <p className="overview__amount text-expense">¥{formatMoney(todayExpense)}</p>
         </div>
         <div className="overview__chips">
           <Tag color="app-yellow" size="small">
-            {count} 笔
-          </Tag>
-          <Tag color="app-blue" size="small">
-            {progress}%
+            {todayCount} 笔
           </Tag>
         </div>
+      </div>
+
+      <div className="overview__cycle-row">
+        <div>
+          <p className="overview__label">本账期支出</p>
+          <p className="overview__sub-amount text-expense">¥{formatMoney(expense)}</p>
+        </div>
+        <Tag color="app-blue" size="small">
+          {progress}%
+        </Tag>
       </div>
 
       <div className="stat-grid">
@@ -48,8 +57,8 @@ export default function CycleOverview({
           <strong className="text-balance">¥{formatMoney(balance)}</strong>
         </div>
         <div className="stat-grid__item">
-          <span>进度</span>
-          <strong>{progress}%</strong>
+          <span>账期笔数</span>
+          <strong>{count}</strong>
         </div>
       </div>
 

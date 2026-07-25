@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   buildDateKey,
   getDaysInMonth,
@@ -20,42 +21,32 @@ function shiftMonth(month, delta) {
   return `${nextYear}-${nextMonth}`
 }
 
-function formatDisplay(dateKey) {
-  if (!dateKey) return '选择日期'
+function formatDisplay(dateKey, compact = false) {
+  if (!dateKey || !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return '选择日期'
   const [year, month, day] = dateKey.split('-')
-  return `${year} 年 ${Number(month)} 月 ${Number(day)} 日`
+  if (compact) {
+    return `${Number(month)}月${Number(day)}日`
+  }
+  return `${year}年${Number(month)}月${Number(day)}日`
 }
 
-export default function DatePicker({ value, onChange }) {
+export default function DatePicker({ value, onChange, floating = false }) {
   const [open, setOpen] = useState(false)
   const [viewMonth, setViewMonth] = useState(() => toMonth(value))
   const rootRef = useRef(null)
   const today = getToday()
 
   useEffect(() => {
-    if (open) setViewMonth(toMonth(value))
-  }, [open, value])
+    if (open) setViewMonth(toMonth(value || today))
+  }, [open, value, today])
 
   useEffect(() => {
     if (!open) return undefined
-
-    const handlePointer = (event) => {
-      if (rootRef.current && !rootRef.current.contains(event.target)) {
-        setOpen(false)
-      }
-    }
-    const handleKey = (event) => {
+    const onKey = (event) => {
       if (event.key === 'Escape') setOpen(false)
     }
-
-    document.addEventListener('mousedown', handlePointer)
-    document.addEventListener('touchstart', handlePointer)
-    document.addEventListener('keydown', handleKey)
-    return () => {
-      document.removeEventListener('mousedown', handlePointer)
-      document.removeEventListener('touchstart', handlePointer)
-      document.removeEventListener('keydown', handleKey)
-    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
   }, [open])
 
   const cells = useMemo(() => {
@@ -76,8 +67,80 @@ export default function DatePicker({ value, onChange }) {
     setOpen(false)
   }
 
+  const panel = (
+    <div
+      className={`ui-datepicker__panel${floating ? ' ui-datepicker__panel--floating' : ''}`}
+      role="dialog"
+      aria-label="选择日期"
+      onMouseDown={(event) => event.stopPropagation()}
+      onClick={(event) => event.stopPropagation()}
+    >
+      <div className="ui-datepicker__header">
+        <button
+          type="button"
+          className="ui-datepicker__nav"
+          onClick={() => setViewMonth((month) => shiftMonth(month, -1))}
+          aria-label="上一月"
+        >
+          ‹
+        </button>
+        <span className="ui-datepicker__title">
+          {viewMonth.split('-')[0]}年{Number(viewMonth.split('-')[1])}月
+        </span>
+        <button
+          type="button"
+          className="ui-datepicker__nav"
+          onClick={() => setViewMonth((month) => shiftMonth(month, 1))}
+          aria-label="下一月"
+        >
+          ›
+        </button>
+      </div>
+
+      <div className="ui-datepicker__weekdays">
+        {WEEKDAYS.map((label) => (
+          <span key={label} className="ui-datepicker__weekday">
+            {label}
+          </span>
+        ))}
+      </div>
+
+      <div className="ui-datepicker__grid">
+        {cells.map((cell) => {
+          if (cell.empty) {
+            return <span key={cell.key} className="ui-datepicker__cell ui-datepicker__cell--empty" />
+          }
+          const isSelected = cell.date === value
+          const isToday = cell.date === today
+          return (
+            <button
+              key={cell.key}
+              type="button"
+              className={[
+                'ui-datepicker__cell',
+                isSelected ? 'ui-datepicker__cell--selected' : '',
+                isToday ? 'ui-datepicker__cell--today' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              onClick={() => handleSelect(cell.date)}
+            >
+              {cell.day}
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="ui-datepicker__footer">
+        <button type="button" className="ui-datepicker__today" onClick={() => handleSelect(today)}>
+          今天
+        </button>
+      </div>
+    </div>
+  )
+
   return (
-    <div className="ui-datepicker" ref={rootRef}>
+    <div className={`ui-datepicker${floating ? ' ui-datepicker--floating' : ''}`} ref={rootRef}>
       <button
         type="button"
         className={`ui-select__control${open ? ' ui-select__control--open' : ''}`}
@@ -86,80 +149,32 @@ export default function DatePicker({ value, onChange }) {
         onClick={() => setOpen((prev) => !prev)}
       >
         <span className={`ui-select__value${value ? '' : ' ui-select__value--placeholder'}`}>
-          {formatDisplay(value)}
+          {formatDisplay(value, floating)}
         </span>
         <span className="ui-select__arrow" aria-hidden="true" />
       </button>
 
-      {open && (
-        <div className="ui-datepicker__panel" role="dialog" aria-label="选择日期">
-          <div className="ui-datepicker__header">
-            <button
-              type="button"
-              className="ui-datepicker__nav"
-              onClick={() => setViewMonth((month) => shiftMonth(month, -1))}
-              aria-label="上一月"
-            >
-              ‹
-            </button>
-            <span className="ui-datepicker__title">
-              {viewMonth.split('-')[0]} 年 {Number(viewMonth.split('-')[1])} 月
-            </span>
-            <button
-              type="button"
-              className="ui-datepicker__nav"
-              onClick={() => setViewMonth((month) => shiftMonth(month, 1))}
-              aria-label="下一月"
-            >
-              ›
-            </button>
-          </div>
-
-          <div className="ui-datepicker__weekdays">
-            {WEEKDAYS.map((label) => (
-              <span key={label} className="ui-datepicker__weekday">
-                {label}
-              </span>
-            ))}
-          </div>
-
-          <div className="ui-datepicker__grid">
-            {cells.map((cell) => {
-              if (cell.empty) {
-                return <span key={cell.key} className="ui-datepicker__cell ui-datepicker__cell--empty" />
-              }
-              const isSelected = cell.date === value
-              const isToday = cell.date === today
-              return (
-                <button
-                  key={cell.key}
-                  type="button"
-                  className={[
-                    'ui-datepicker__cell',
-                    isSelected ? 'ui-datepicker__cell--selected' : '',
-                    isToday ? 'ui-datepicker__cell--today' : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                  onClick={() => handleSelect(cell.date)}
-                >
-                  {cell.day}
-                </button>
-              )
-            })}
-          </div>
-
-          <div className="ui-datepicker__footer">
-            <button
-              type="button"
-              className="ui-datepicker__today"
-              onClick={() => handleSelect(today)}
-            >
-              今天
-            </button>
-          </div>
-        </div>
-      )}
+      {floating
+        ? open &&
+          createPortal(
+            <div className="ui-datepicker__layer" role="presentation">
+              {/*
+                用 click 关闭，不要在 pointerdown 时卸载浮层，
+                否则同一次点击会穿透到底下的保存/取消按钮。
+              */}
+              <button
+                type="button"
+                className="ui-datepicker__backdrop"
+                aria-label="关闭日期选择"
+                onClick={() => setOpen(false)}
+              />
+              {panel}
+            </div>,
+            document.body,
+          )
+        : open
+          ? panel
+          : null}
     </div>
   )
 }

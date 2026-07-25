@@ -8,10 +8,13 @@ const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日']
 export default function MonthChart({
   cycleStart,
   cycleEnd,
-  dailyMap,
+  cycleLabel,
   cycleRange,
+  dailyMap,
   selectedDate,
   onSelectDate,
+  onCycleChange,
+  canGoNext = true,
 }) {
   const cells = useCycleCalendarDays(cycleStart, cycleEnd, dailyMap)
   const today = getToday()
@@ -21,7 +24,29 @@ export default function MonthChart({
       <div className="island-panel__head">
         <div>
           <SectionHeading tone="orange">每日一览</SectionHeading>
-          <p className="island-panel__meta">{cycleRange}</p>
+          <div className="month-nav" role="group" aria-label="切换账期">
+            <button
+              type="button"
+              className="month-nav__btn"
+              onClick={() => onCycleChange?.(-1)}
+              aria-label="上一账期"
+            >
+              ‹
+            </button>
+            <div className="month-nav__copy">
+              <span className="month-nav__label">{cycleLabel}</span>
+              <span className="month-nav__range">{cycleRange}</span>
+            </div>
+            <button
+              type="button"
+              className="month-nav__btn"
+              onClick={() => onCycleChange?.(1)}
+              disabled={!canGoNext}
+              aria-label="下一账期"
+            >
+              ›
+            </button>
+          </div>
         </div>
         <div className="calendar-legend">
           <Tag color="app-red" size="small">

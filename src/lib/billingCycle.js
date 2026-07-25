@@ -74,6 +74,17 @@ export function getPreviousCycleStart(cycleStartDay, today = getToday()) {
   )
 }
 
+/** 相对某账期前后移动 delta 个账期（通常为 ±1） */
+export function shiftCycle(cycle, delta, cycleStartDay) {
+  const start = parseDateKey(cycle.start)
+  start.setMonth(start.getMonth() + delta)
+  const day = normalizeCycleStartDay(cycleStartDay)
+  const anchor = toDateKey(
+    buildCycleDate(start.getFullYear(), start.getMonth(), day),
+  )
+  return getCycleContaining(anchor, cycleStartDay)
+}
+
 export function formatCycleRange(cycle) {
   const format = (dateKey) => {
     const [, month, day] = dateKey.split('-')

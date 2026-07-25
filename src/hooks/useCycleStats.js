@@ -3,6 +3,7 @@ import {
   formatCycleLabel,
   formatCycleRange,
   getCurrentCycle,
+  getCycleContaining,
   getCycleProgress,
   isDateInRange,
   listDatesDescending,
@@ -34,10 +35,11 @@ function getWeekdayMondayFirst(dateKey) {
   return (sundayFirst + 6) % 7
 }
 
-export function useCycleOverview(transactions, cycleStartDay) {
+export function useCycleOverview(transactions, cycleStartDay, anchorDate) {
   return useMemo(() => {
     const today = getToday()
-    const cycle = getCurrentCycle(cycleStartDay, today)
+    const cycle = getCycleContaining(anchorDate || today, cycleStartDay)
+    const currentCycle = getCurrentCycle(cycleStartDay, today)
     const items = transactions.filter((item) =>
       isDateInRange(item.date, cycle.start, cycle.end),
     )
@@ -57,14 +59,19 @@ export function useCycleOverview(transactions, cycleStartDay) {
     return {
       today,
       cycle,
+      currentCycle,
       cycleLabel: formatCycleLabel(cycle),
       cycleRange: formatCycleRange(cycle),
       progress: getCycleProgress(cycle, today),
       items,
       dailyMap,
+      todayExpense: dailyMap[today]?.expense || 0,
+      todayIncome: dailyMap[today]?.income || 0,
+      todayCount: items.filter((item) => item.date === today).length,
+      canGoNext: cycle.start < currentCycle.start,
       ...summary,
     }
-  }, [transactions, cycleStartDay])
+  }, [transactions, cycleStartDay, anchorDate])
 }
 
 export function useHistoryOverview(transactions, cycleStartDay) {
