@@ -63,14 +63,15 @@ export default function HomePage() {
 
         {todayItems.length === 0 ? (
           <p className="empty-text">今天还没有记录，点下方按钮记一笔吧。</p>
-        ) : (
-          <TransactionDayList
-            items={todayItems}
-            categories={state.categories}
-            onEdit={setEditing}
-            onDelete={setConfirmId}
-          />
-        )}
+        ) : null}
+        <TransactionDayList
+          key={today}
+          items={todayItems}
+          categories={state.categories}
+          onEdit={setEditing}
+          onDelete={setConfirmId}
+          emptyText=""
+        />
       </Card>
 
       <TransactionForm

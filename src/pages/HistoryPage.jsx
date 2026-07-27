@@ -79,6 +79,7 @@ export default function HistoryPage() {
           </div>
 
           <TransactionDayList
+            key={selectedDate || 'none'}
             items={dayItems}
             categories={state.categories}
             onEdit={setEditing}

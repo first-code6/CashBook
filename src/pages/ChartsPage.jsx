@@ -1,12 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Card } from 'animal-island-ui'
-import AddFab from '../components/AddFab'
 import CategoryChart from '../components/CategoryChart'
 import SectionHeading from '../components/SectionHeading'
 import SegmentedControl from '../components/SegmentedControl'
 import { useCashbook } from '../context/CashbookContext'
 import { useCyclePieData } from '../hooks/useCycleStats'
-import { getToday } from '../lib/date'
 import { formatMoney } from '../lib/money'
 
 function ChartPanel({ title, data = [], total = 0, emptyText, chartType }) {
@@ -137,8 +135,6 @@ export default function ChartsPage() {
         }
         chartType={chartType}
       />
-
-      <AddFab defaultDate={getToday()} />
     </div>
   )
 }

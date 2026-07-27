@@ -9,3 +9,9 @@ export function isTauriRuntime() {
 export function isNativeRuntime() {
   return isTauriRuntime()
 }
+
+/** 是否 Android（WebView UA；用于启动时自动检查更新等） */
+export function isAndroidRuntime() {
+  if (typeof navigator === 'undefined') return false
+  return /Android/i.test(navigator.userAgent || '')
+}

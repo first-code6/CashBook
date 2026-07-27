@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { Cursor } from 'animal-island-ui'
 import Layout from './components/Layout'
+import StartupUpdateCheck from './components/StartupUpdateCheck'
 import { CashbookProvider } from './context/CashbookContext'
 import ChartsPage from './pages/ChartsPage'
 import HistoryPage from './pages/HistoryPage'
@@ -12,6 +13,7 @@ export default function App() {
     <CashbookProvider>
       <BrowserRouter>
         <Cursor />
+        <StartupUpdateCheck />
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />

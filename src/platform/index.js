@@ -4,12 +4,13 @@
  * 业务代码只从这里导入，例如：
  *   import { isNative, openUrl, writeTextFileWithFallback } from '../platform'
  */
-import { isNativeRuntime, isTauriRuntime } from './detect'
+import { isAndroidRuntime, isNativeRuntime, isTauriRuntime } from './detect'
 import * as tauri from './tauri/native'
 import * as web from './web/browser'
 
 export const isNative = isNativeRuntime
 export const isTauri = isTauriRuntime
+export const isAndroid = isAndroidRuntime
 
 function impl() {
   return isTauriRuntime() ? tauri : web
