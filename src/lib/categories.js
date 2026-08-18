@@ -51,6 +51,26 @@ export function getCategoryMap(categories) {
   return Object.fromEntries(categories.map((item) => [item.id, item]))
 }
 
+/** Resolve a category to its highest valid parent. */
+export function getRootCategory(categoryMap, categoryId) {
+  let category = categoryMap[categoryId]
+  if (!category) return null
+
+  const visited = new Set([category.id])
+  while (category.parentId) {
+    const parent = categoryMap[category.parentId]
+    if (!parent || parent.type !== category.type || visited.has(parent.id)) break
+    visited.add(parent.id)
+    category = parent
+  }
+
+  return category
+}
+
+export function getRootCategoryId(categories, categoryId) {
+  return getRootCategory(getCategoryMap(categories), categoryId)?.id || null
+}
+
 /** Display label: `车辆 · 加油` or `交通`. */
 export function getCategoryPathLabel(categories, categoryId) {
   const map = getCategoryMap(categories)

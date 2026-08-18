@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Input, Modal } from 'animal-island-ui'
 import CategoryTileGrid from './CategoryTileGrid'
 import DatePicker from './DatePicker'
@@ -10,7 +10,7 @@ import { fenToYuan, yuanToFen } from '../lib/money'
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫']
 
-function AmountKeypad({ value, onChange, onDone }) {
+function AmountKeypad({ id, value, onChange, onDone }) {
   const pushKey = (key) => {
     if (key === '⌫') {
       onChange(String(value || '').slice(0, -1))
@@ -33,7 +33,7 @@ function AmountKeypad({ value, onChange, onDone }) {
   }
 
   return (
-    <div className="amount-keypad">
+    <div className="amount-keypad" id={id}>
       <div className="amount-keypad__grid">
         {KEYS.map((key) => (
           <button
@@ -41,6 +41,7 @@ function AmountKeypad({ value, onChange, onDone }) {
             type="button"
             className={`amount-keypad__key${key === '⌫' ? ' amount-keypad__key--action' : ''}`}
             onClick={() => pushKey(key)}
+            aria-label={key === '⌫' ? '删除一位' : undefined}
           >
             {key}
           </button>
@@ -71,6 +72,8 @@ export default function TransactionForm({
   const [errorMessage, setErrorMessage] = useState('')
   const [keypadOpen, setKeypadOpen] = useState(false)
   const [expandedCategoryId, setExpandedCategoryId] = useState(null)
+  const amountTriggerRef = useRef(null)
+  const keypadRef = useRef(null)
 
   useEffect(() => {
     if (!open) return
@@ -94,6 +97,30 @@ export default function TransactionForm({
     }
     setKeypadOpen(false)
   }, [open, defaultDate, transaction, state.categories])
+
+  useEffect(() => {
+    if (!open || !keypadOpen) return undefined
+
+    const handleDocumentClick = (event) => {
+      const target = event.target
+      if (!(target instanceof Node)) return
+      if (amountTriggerRef.current?.contains(target) || keypadRef.current?.contains(target)) {
+        return
+      }
+      setKeypadOpen(false)
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setKeypadOpen(false)
+    }
+
+    document.addEventListener('click', handleDocumentClick)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('click', handleDocumentClick)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [open, keypadOpen])
 
   const categoryItems = useMemo(
     () =>
@@ -174,22 +201,38 @@ export default function TransactionForm({
         title={isEditing ? '修改记录' : '记一笔'}
         onClose={handleClose}
         footer={
-          keypadOpen ? (
-            <AmountKeypad
-              value={amount}
-              onChange={setAmount}
-              onDone={() => setKeypadOpen(false)}
-            />
-          ) : (
-            <div className="fs-page__footer-actions">
-              <Button block onClick={handleClose}>
-                取消
-              </Button>
-              <Button type="primary" block onClick={handleSubmit}>
-                {isEditing ? '保存修改' : '保存'}
-              </Button>
+          <div className="tx-footer">
+            <div
+              className={`tx-footer__panel${keypadOpen ? ' tx-footer__panel--visible' : ''}`}
+              aria-hidden={!keypadOpen}
+              inert={!keypadOpen}
+            >
+              <div className="tx-footer__panel-inner" ref={keypadRef}>
+                <AmountKeypad
+                  id="amount-keypad"
+                  value={amount}
+                  onChange={setAmount}
+                  onDone={() => setKeypadOpen(false)}
+                />
+              </div>
             </div>
-          )
+            <div
+              className={`tx-footer__panel${keypadOpen ? '' : ' tx-footer__panel--visible'}`}
+              aria-hidden={keypadOpen}
+              inert={keypadOpen}
+            >
+              <div className="tx-footer__panel-inner">
+                <div className="fs-page__footer-actions">
+                  <Button block onClick={handleClose}>
+                    取消
+                  </Button>
+                  <Button type="primary" block onClick={handleSubmit}>
+                    {isEditing ? '保存修改' : '保存'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         }
       >
         <div className="tx-form tx-form--split">
@@ -207,7 +250,7 @@ export default function TransactionForm({
                   expandedId={expandedCategoryId}
                   onExpand={setExpandedCategoryId}
                   onSelect={handleCategorySelect}
-                  iconSize={28}
+                  iconSize={34}
                 />
               )}
             </div>
@@ -229,8 +272,11 @@ export default function TransactionForm({
                 </button>
                 <button
                   type="button"
-                  className="tx-amount__value"
+                  className={`tx-amount__value${keypadOpen ? ' tx-amount__value--open' : ''}`}
                   onClick={() => setKeypadOpen(true)}
+                  ref={amountTriggerRef}
+                  aria-expanded={keypadOpen}
+                  aria-controls="amount-keypad"
                 >
                   <span className="tx-amount__currency">¥</span>
                   <span

@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Input } from 'animal-island-ui'
-import CategoryIcon, { CATEGORY_ICON_OPTIONS } from './CategoryIcon'
+import CategoryIcon from './CategoryIcon'
 import CategoryTileGrid from './CategoryTileGrid'
 import FullScreenPage from './FullScreenPage'
+import { CATEGORY_ICON_GROUPS, CATEGORY_ICON_LABELS } from '../data/categoryIcons'
 import { buildCategoryTree, getCategoryMap } from '../lib/categories'
 
 /**
@@ -30,6 +31,7 @@ export default function CategoryBrowseScreen({
   const [draftIcon, setDraftIcon] = useState(type === 'income' ? 'salary' : 'food')
   const [editing, setEditing] = useState(null)
   const [addParentId, setAddParentId] = useState(null)
+  const iconPickerRef = useRef(null)
 
   useEffect(() => {
     if (!open) return
@@ -40,6 +42,26 @@ export default function CategoryBrowseScreen({
     setEditing(null)
     setAddParentId(null)
   }, [open, type])
+
+  useEffect(() => {
+    if (!open || (screen !== 'add' && screen !== 'edit')) return undefined
+
+    const frame = requestAnimationFrame(() => {
+      const picker = iconPickerRef.current
+      const selected = picker?.querySelector('.cat-form__icon-btn--active')
+      if (!picker || !selected) return
+
+      const pickerRect = picker.getBoundingClientRect()
+      const selectedRect = selected.getBoundingClientRect()
+      if (selectedRect.top < pickerRect.top + 40) {
+        picker.scrollTop -= pickerRect.top + 40 - selectedRect.top
+      } else if (selectedRect.bottom > pickerRect.bottom - 12) {
+        picker.scrollTop += selectedRect.bottom - pickerRect.bottom + 12
+      }
+    })
+
+    return () => cancelAnimationFrame(frame)
+  }, [open, screen, draftIcon])
 
   const reset = () => {
     setExpandedId(null)
@@ -165,18 +187,42 @@ export default function CategoryBrowseScreen({
   const renderForm = (confirmLabel, onConfirm, showDelete = false) => (
     <div className="cat-form">
       <p className="cat-form__label">选择图标</p>
-      <div className="cat-form__icons">
-        {CATEGORY_ICON_OPTIONS.map((key) => {
-          const active = key === draftIcon
+      <div
+        className="cat-form__icon-picker"
+        ref={iconPickerRef}
+        tabIndex={0}
+        aria-label="分类图标列表"
+      >
+        {CATEGORY_ICON_GROUPS.map((group) => {
+          const headingId = `category-icons-${type}-${group.id}`
           return (
-            <button
-              key={key}
-              type="button"
-              className={`cat-form__icon-btn${active ? ' cat-form__icon-btn--active' : ''}`}
-              onClick={() => setDraftIcon(key)}
+            <section
+              key={group.id}
+              className="cat-form__icon-group"
+              aria-labelledby={headingId}
             >
-              <CategoryIcon name={key} size={34} />
-            </button>
+              <h3 id={headingId} className="cat-form__icon-group-title">
+                {group.label}
+              </h3>
+              <div className="cat-form__icons">
+                {group.icons.map((key) => {
+                  const active = key === draftIcon
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      className={`cat-form__icon-btn${active ? ' cat-form__icon-btn--active' : ''}`}
+                      onClick={() => setDraftIcon(key)}
+                      aria-label={CATEGORY_ICON_LABELS[key] || key}
+                      aria-pressed={active}
+                      title={CATEGORY_ICON_LABELS[key] || key}
+                    >
+                      <CategoryIcon name={key} size={40} />
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
           )
         })}
       </div>
@@ -254,7 +300,8 @@ export default function CategoryBrowseScreen({
             expandedId={expandedId}
             onExpand={setExpandedId}
             onSelect={handleTile}
-            iconSize={28}
+            iconSize={34}
+            expandEmptyParents={mode === 'manage'}
             trailing={
               mode === 'manage' ? (
                 <button

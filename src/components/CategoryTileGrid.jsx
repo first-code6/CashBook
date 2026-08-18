@@ -13,8 +13,9 @@ export default function CategoryTileGrid({
   expandedId,
   onExpand,
   trailing,
-  iconSize = 28,
+  iconSize = 34,
   columns = DEFAULT_COLS,
+  expandEmptyParents = false,
 }) {
   const rows = []
   for (let i = 0; i < items.length; i += columns) {
@@ -23,7 +24,7 @@ export default function CategoryTileGrid({
 
   const handleClick = (item) => {
     const kids = item.children || []
-    if (kids.length > 0) {
+    if (kids.length > 0 || expandEmptyParents) {
       onExpand?.(expandedId === item.id ? null : item.id)
       return
     }
@@ -35,6 +36,7 @@ export default function CategoryTileGrid({
     const active = selectedId && String(selectedId) === String(item.id)
     const expanded = expandedId && String(expandedId) === String(item.id)
     const hasChildren = (item.children || []).length > 0
+    const canExpand = !child && (hasChildren || expandEmptyParents)
 
     return (
       <button
@@ -49,6 +51,7 @@ export default function CategoryTileGrid({
           .filter(Boolean)
           .join(' ')}
         onClick={() => (child ? onSelect?.(item) : handleClick(item))}
+        aria-expanded={canExpand ? Boolean(expanded) : undefined}
       >
         <span className="cat-grid__icon">
           <CategoryIcon name={item.icon || 'other'} size={iconSize} />

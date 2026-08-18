@@ -9,7 +9,7 @@ import {
   listDatesDescending,
   listDatesInclusive,
 } from '../lib/billingCycle'
-import { getCategoryPathLabel } from '../lib/categories'
+import { buildCategoryChartGroup } from '../lib/categoryChartData'
 import { getToday } from '../lib/date'
 
 function summarize(items) {
@@ -142,21 +142,6 @@ export function useCycleCalendarDays(cycleStart, cycleEnd, dailyMap) {
   }, [cycleStart, cycleEnd, dailyMap])
 }
 
-const PIE_COLORS = [
-  '#F4A261',
-  '#E76F51',
-  '#2A9D8F',
-  '#E9C46A',
-  '#264653',
-  '#8ECAE6',
-  '#FB8500',
-  '#90BE6D',
-  '#F72585',
-  '#4CC9F0',
-  '#B5838D',
-  '#6D6875',
-]
-
 export function useCyclePieData(transactions, categories, cycleStartDay) {
   return useMemo(() => {
     const today = getToday()
@@ -165,34 +150,14 @@ export function useCyclePieData(transactions, categories, cycleStartDay) {
       isDateInRange(item.date, cycle.start, cycle.end),
     )
 
-    const buildSlices = (type) => {
-      const totals = {}
-      for (const item of items) {
-        if (item.type !== type) continue
-        totals[item.categoryId] = (totals[item.categoryId] || 0) + item.amount
-      }
-
-      const slices = Object.entries(totals)
-        .map(([categoryId, value], index) => ({
-          categoryId,
-          name: getCategoryPathLabel(categories, categoryId),
-          value,
-          fill: PIE_COLORS[index % PIE_COLORS.length],
-        }))
-        .sort((a, b) => b.value - a.value)
-
-      const total = slices.reduce((sum, item) => sum + item.value, 0)
-      return { slices, total }
-    }
-
     const summary = summarize(items)
 
     return {
       cycle,
       cycleLabel: formatCycleLabel(cycle),
       cycleRange: formatCycleRange(cycle),
-      expense: buildSlices('expense'),
-      income: buildSlices('income'),
+      expense: buildCategoryChartGroup(items, categories, 'expense'),
+      income: buildCategoryChartGroup(items, categories, 'income'),
       balance: summary.balance,
       count: summary.count,
       totalIncome: summary.income,

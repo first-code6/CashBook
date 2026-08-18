@@ -921,6 +921,38 @@ input:focus-visible {
   gap: 0.65rem;
 }
 
+.chart-panel__heading {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.chart-drill-back {
+  appearance: none;
+  justify-self: start;
+  border: 1px solid rgba(42, 157, 143, 0.25);
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--teal-deep);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 0.14s ease,
+    background 0.14s ease,
+    box-shadow 0.14s ease;
+}
+
+.chart-drill-back:hover {
+  background: rgba(42, 157, 143, 0.1);
+}
+
+.chart-drill-back:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 1px 2px rgba(38, 70, 83, 0.12);
+}
+
 .pie-empty {
   min-height: 220px;
   display: grid;
@@ -938,12 +970,39 @@ input:focus-visible {
 }
 
 .pie-legend__item {
+  appearance: none;
+  width: 100%;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 0.45rem;
+  border: none;
+  border-radius: 10px;
+  padding: 0.3rem 0.4rem;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
   font-size: 0.82rem;
   font-weight: 700;
+  text-align: left;
+}
+
+.pie-legend__item--interactive {
+  cursor: pointer;
+  transition:
+    transform 0.14s ease,
+    background 0.14s ease,
+    box-shadow 0.14s ease;
+}
+
+.pie-legend__item--interactive:hover {
+  background: rgba(42, 157, 143, 0.08);
+}
+
+.pie-legend__item--interactive:active {
+  transform: translateY(1px) scale(0.99);
+  background: rgba(42, 157, 143, 0.14);
+  box-shadow: inset 0 1px 2px rgba(38, 70, 83, 0.12);
 }
 
 .pie-legend__dot {
@@ -961,7 +1020,49 @@ input:focus-visible {
 
 .pie-chart-wrap {
   width: 100%;
+  min-width: 0;
   min-height: 220px;
+}
+
+.pie-chart-wrap .recharts-wrapper,
+.pie-chart-wrap .recharts-surface {
+  max-width: 100%;
+}
+
+.pie-chart-wrap .recharts-wrapper,
+.pie-chart-wrap .recharts-surface,
+.pie-chart-wrap .recharts-pie-sector,
+.pie-chart-wrap .recharts-sector,
+.pie-chart-wrap .category-chart__slice {
+  outline: none;
+}
+
+.category-chart__slice--interactive {
+  cursor: pointer;
+  outline: none;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    transform 0.14s ease,
+    opacity 0.14s ease,
+    filter 0.14s ease;
+}
+
+.category-chart__slice--interactive:hover {
+  opacity: 0.86;
+  filter: brightness(1.05);
+  transform: scale(1.015);
+}
+
+.category-chart__slice--interactive:active {
+  opacity: 0.72;
+  transform: scale(0.97);
+}
+
+.category-chart__slice--interactive:focus-visible {
+  stroke: var(--teal-deep);
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 3px rgba(42, 157, 143, 0.35));
 }
 
 .chart-tooltip {
@@ -974,6 +1075,36 @@ input:focus-visible {
 
 .chart-tooltip strong {
   font-weight: 800;
+}
+
+@media (max-width: 560px) {
+  .pie-panel .island-panel__head {
+    align-items: flex-start;
+    gap: 0.55rem;
+  }
+
+  .pie-legend__item {
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: 0.08rem;
+    padding: 0.38rem 0.35rem;
+  }
+
+  .pie-legend__name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pie-legend__value {
+    grid-column: 2;
+    justify-self: start;
+    font-size: 0.75rem;
+  }
+
+  .chart-tooltip {
+    max-width: min(12rem, calc(100vw - 3rem));
+  }
 }
 
 /* ── Settings ── */
@@ -1612,7 +1743,7 @@ input:focus-visible {
   border: 2px solid rgba(255, 255, 255, 0.75);
   background: rgba(255, 255, 255, 0.62);
   border-radius: 14px;
-  padding: 0.55rem 0.3rem 0.45rem;
+  padding: 0.65rem 0.3rem 0.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1656,8 +1787,8 @@ input:focus-visible {
 .cat-grid__icon {
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
 }
 
 .cat-grid__icon--add {
@@ -1713,6 +1844,79 @@ input:focus-visible {
   color: var(--ink-soft);
 }
 
+.cat-form__icon-picker {
+  height: clamp(12rem, 42vh, 22rem);
+  height: clamp(12rem, 42dvh, 22rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scroll-padding-block: 2.5rem 0.75rem;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 0.45rem 0.65rem;
+  border: 1.5px solid rgba(120, 100, 80, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: inset 0 1px 4px rgba(90, 70, 40, 0.05);
+  scrollbar-width: thin;
+  scrollbar-color: #9fcfc5 rgba(255, 248, 236, 0.55);
+}
+
+.cat-form__icon-picker:focus-visible {
+  outline: 2px solid rgba(42, 157, 143, 0.55);
+  outline-offset: 2px;
+}
+
+.cat-form__icon-picker::-webkit-scrollbar {
+  width: 9px;
+}
+
+.cat-form__icon-picker::-webkit-scrollbar-track {
+  margin: 7px 0;
+  border-radius: 999px;
+  background: rgba(255, 248, 236, 0.7);
+  box-shadow: inset 0 0 0 1px rgba(120, 100, 80, 0.08);
+}
+
+.cat-form__icon-picker::-webkit-scrollbar-thumb {
+  min-height: 2.8rem;
+  border: 2px solid rgba(255, 248, 236, 0.78);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #b7ded5, #72b8aa);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 1px 2px rgba(38, 70, 83, 0.12);
+}
+
+.cat-form__icon-picker::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #98d1c5, #4fa493);
+}
+
+.cat-form__icon-group {
+  display: grid;
+  gap: 0.42rem;
+}
+
+.cat-form__icon-group + .cat-form__icon-group {
+  margin-top: 0.55rem;
+}
+
+.cat-form__icon-group-title {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: 0 -0.15rem;
+  padding: 0.5rem 0.2rem 0.32rem;
+  border-bottom: 1px solid rgba(120, 100, 80, 0.1);
+  background: rgba(249, 247, 237, 0.94);
+  color: var(--teal-deep);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  backdrop-filter: blur(8px);
+}
+
 .cat-form__icons {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -1729,6 +1933,22 @@ input:focus-visible {
   place-items: center;
   cursor: pointer;
   padding: 0;
+  min-width: 3rem;
+  min-height: 3rem;
+  transition:
+    transform 0.12s ease,
+    border-color 0.12s ease,
+    background 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.cat-form__icon-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.cat-form__icon-btn:active {
+  transform: scale(0.94);
+  background: rgba(42, 157, 143, 0.12);
 }
 
 .cat-form__icon-btn--active {
@@ -1926,6 +2146,15 @@ input:focus-visible {
   justify-content: flex-end;
   gap: 0.15rem;
   text-align: right;
+  transition:
+    background 0.14s ease,
+    box-shadow 0.14s ease;
+}
+
+.tx-amount__value:active,
+.tx-amount__value--open {
+  background: rgba(42, 157, 143, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(42, 157, 143, 0.14);
 }
 
 .tx-amount__currency {
@@ -1981,6 +2210,38 @@ input:focus-visible {
   box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.16) !important;
 }
 
+.tx-footer {
+  display: grid;
+}
+
+.tx-footer__panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(14px);
+  transition:
+    grid-template-rows 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.16s ease,
+    transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0.24s;
+}
+
+.tx-footer__panel--visible {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+  transition-delay: 0s;
+}
+
+.tx-footer__panel-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
 .amount-keypad {
   display: grid;
   gap: 0.55rem;
@@ -2004,15 +2265,31 @@ input:focus-visible {
   color: var(--ink);
   cursor: pointer;
   box-shadow: 0 2px 0 rgba(90, 70, 40, 0.06);
+  touch-action: manipulation;
+  transition:
+    transform 0.1s ease,
+    background 0.1s ease,
+    border-color 0.1s ease,
+    box-shadow 0.1s ease;
 }
 
 .amount-keypad__key:active {
-  transform: translateY(1px);
-  box-shadow: none;
+  transform: translateY(2px) scale(0.98);
+  border-color: rgba(42, 157, 143, 0.38);
+  background: rgba(42, 157, 143, 0.16);
+  box-shadow: inset 0 2px 3px rgba(38, 70, 83, 0.12);
 }
 
 .amount-keypad__key--action {
   color: var(--ink-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tx-footer__panel,
+  .tx-amount__value,
+  .amount-keypad__key {
+    transition: none;
+  }
 }
 
 .ui-datepicker--floating {
@@ -2056,6 +2333,10 @@ input:focus-visible {
 @media (max-width: 380px) {
   .cat-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cat-form__icons {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
