@@ -7,8 +7,8 @@ import {
   openUrl,
 } from '../platform'
 
-// 远程更新配置来自环境变量：
-//   VITE_APP_VERSION          —— 构建期版本（应与 tauri.conf.json version 一致）
+// 远程更新配置：
+//   APP_VERSION               —— package.json version（Web 回退；由 vite 注入）
 //   VITE_UPDATE_MANIFEST_URL  —— 远程 update.json
 // JSON 结构示例：
 // { "version": "0.2.0", "url": "https://your.host/jizhangben-0.2.0.apk", "notes": "更新内容" }
@@ -38,7 +38,7 @@ export function compareVersions(a, b) {
 /**
  * 当前运行版本：
  * - Android / Tauri：优先用原生 getVersion()（= tauri.conf.json / versionName）
- * - Web：回退 VITE_APP_VERSION
+ * - Web：回退 package.json version
  */
 export async function getCurrentAppVersion() {
   const native = await getNativeAppVersion()

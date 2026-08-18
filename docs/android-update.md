@@ -2,10 +2,9 @@
 #
 # ## 版本必须一致
 # 发版时同步修改：
-# - package.json → version
+# - package.json → version                 （Web / 构建回退，vite 自动注入）
 # - src-tauri/tauri.conf.json → version   （Android versionName 来源）
 # - src-tauri/Cargo.toml → version
-# - .env → VITE_APP_VERSION               （Web / 构建回退）
 #
 # 应用内「检查更新」在 Tauri/Android 上优先用 getVersion()，
 # 与 tauri.conf.json 的 version 一致，避免前端写死版本与安装包不一致。
