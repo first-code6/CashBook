@@ -111,6 +111,7 @@ export function buildCategoryChartGroup(transactions, categories, type) {
           name: metadata.get(categoryId)?.name || '未分类',
           value,
           hasChildren: false,
+          drillable: true,
         })),
       )
 
@@ -131,4 +132,22 @@ export function buildCategoryChartGroup(transactions, categories, type) {
     breakdowns,
     total: slices.reduce((sum, item) => sum + item.value, 0),
   }
+}
+
+/** 取出某个根分类下、某个分支（子分类或本级）对应的全部交易。 */
+export function getBranchTransactions(transactions, categories, type, rootId, branchId) {
+  const categoryMap = getCategoryMap(categories)
+  const result = []
+  for (const transaction of transactions) {
+    if (transaction.type !== type) continue
+    const category = categoryMap[transaction.categoryId]
+    const root = getRootCategory(categoryMap, transaction.categoryId)
+    const txRootId = root?.id || UNCATEGORIZED_CATEGORY_ID
+    if (txRootId !== rootId) continue
+    const branch = category && root ? getRootBranch(categoryMap, category, root.id) : null
+    const txBranchId = branch?.id || UNCATEGORIZED_CATEGORY_ID
+    if (txBranchId !== branchId) continue
+    result.push(transaction)
+  }
+  return result.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
 }

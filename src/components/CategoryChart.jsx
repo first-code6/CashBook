@@ -72,14 +72,14 @@ export default function CategoryChart({ chartType, data, onSliceClick }) {
   if (!data.length) return null
 
   const getCellProps = (entry) => {
-    const interactive = Boolean(onSliceClick && entry.hasChildren)
+    const interactive = Boolean(onSliceClick && (entry.hasChildren || entry.drillable))
     if (!interactive) return { className: 'category-chart__slice' }
 
     return {
       className: 'category-chart__slice category-chart__slice--interactive',
       role: 'button',
       tabIndex: 0,
-      'aria-label': `查看${entry.name}的子分类统计`,
+      'aria-label': `查看${entry.name}的明细`,
       onClick: () => onSliceClick(entry),
       onKeyDown: (event) => {
         if (event.key !== 'Enter' && event.key !== ' ') return
@@ -150,6 +150,9 @@ export default function CategoryChart({ chartType, data, onSliceClick }) {
             dataKey="value"
             radius={size.isCompact ? [0, 10, 10, 0] : [10, 10, 0, 0]}
             barSize={size.isCompact ? 22 : undefined}
+            isAnimationActive
+            animationDuration={300}
+            animationBegin={0}
           >
             {data.map((entry) => (
               <Cell key={entry.categoryId} fill={entry.fill} {...getCellProps(entry)} />
@@ -171,6 +174,9 @@ export default function CategoryChart({ chartType, data, onSliceClick }) {
               Math.min(size.width, size.height) * (size.isCompact ? 0.39 : 0.36)
             }
             paddingAngle={2}
+            isAnimationActive
+            animationDuration={400}
+            animationBegin={0}
           >
             {data.map((entry) => (
               <Cell key={entry.categoryId} fill={entry.fill} {...getCellProps(entry)} />

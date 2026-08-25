@@ -1,10 +1,14 @@
 import { useMemo, useState } from 'react'
-import { Card } from 'animal-island-ui'
+import { Card, Tag } from 'animal-island-ui'
 import CategoryChart from '../components/CategoryChart'
+import CategoryIcon from '../components/CategoryIcon'
 import SectionHeading from '../components/SectionHeading'
 import SegmentedControl from '../components/SegmentedControl'
 import { useCashbook } from '../context/CashbookContext'
 import { useCyclePieData } from '../hooks/useCycleStats'
+import { getBranchTransactions } from '../lib/categoryChartData'
+import { getCategoryIconName, getCategoryPathLabel } from '../lib/categories'
+import { formatDayLabel } from '../lib/date'
 import { formatMoney } from '../lib/money'
 
 function ChartPanel({
@@ -24,7 +28,7 @@ function ChartPanel({
         <div className="chart-panel__heading">
           {onBack ? (
             <button type="button" className="chart-drill-back" onClick={onBack}>
-              ‹ 返回汇总
+              ‹ 返回
             </button>
           ) : null}
           <SectionHeading tone="blue">{title}</SectionHeading>
@@ -40,7 +44,9 @@ function ChartPanel({
           <div className="pie-legend">
             {slices.map((item) => {
               const percent = total > 0 ? Math.round((item.value / total) * 100) : 0
-              const interactive = Boolean(onSliceClick && item.hasChildren)
+              const interactive = Boolean(
+                onSliceClick && (item.hasChildren || item.drillable),
+              )
               const content = (
                 <>
                   <span
@@ -60,7 +66,7 @@ function ChartPanel({
                   type="button"
                   className="pie-legend__item pie-legend__item--interactive"
                   onClick={() => onSliceClick(item)}
-                  aria-label={`查看${item.name}的子分类统计`}
+                  aria-label={`查看${item.name}的明细`}
                 >
                   {content}
                 </button>
@@ -77,6 +83,55 @@ function ChartPanel({
   )
 }
 
+function BranchTransactionsPanel({ title, items, categories, onBack }) {
+  return (
+    <Card color="app-blue" pattern="default" className="island-panel pie-panel">
+      <div className="island-panel__head">
+        <div className="chart-panel__heading">
+          <button type="button" className="chart-drill-back" onClick={onBack}>
+            ‹ 返回子分类
+          </button>
+          <SectionHeading tone="blue">{title}</SectionHeading>
+        </div>
+        <p className="island-panel__meta">{items.length} 笔</p>
+      </div>
+
+      {items.length === 0 ? (
+        <div className="pie-empty">没有记录</div>
+      ) : (
+        <div className="branch-tx-list">
+          {items.map((item) => (
+            <div key={item.id} className="history-item branch-tx-list__item">
+              <div className="history-item__main" style={{ cursor: 'default' }}>
+                <p className="history-item__category">
+                  <CategoryIcon
+                    name={getCategoryIconName(categories, item.categoryId)}
+                    size={24}
+                  />
+                  {getCategoryPathLabel(categories, item.categoryId)}
+                  <Tag color={item.type === 'income' ? 'app-teal' : 'app-red'} size="small">
+                    {item.type === 'income' ? '收入' : '支出'}
+                  </Tag>
+                </p>
+                <p className="history-item__note">
+                  {formatDayLabel(item.date)}
+                  {item.note ? ` · ${item.note}` : ' · 无备注'}
+                </p>
+              </div>
+              <div className="history-item__side">
+                <strong className={item.type === 'income' ? 'text-income' : 'text-expense'}>
+                  {item.type === 'income' ? '+' : '-'}
+                  {formatMoney(item.amount)}
+                </strong>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
+
 export default function ChartsPage() {
   const { state } = useCashbook()
   const chartData = useCyclePieData(
@@ -87,35 +142,72 @@ export default function ChartsPage() {
   const [mode, setMode] = useState('expense')
   const [chartType, setChartType] = useState('pie')
   const [drillRootId, setDrillRootId] = useState(null)
+  const [drillBranchId, setDrillBranchId] = useState(null)
 
-  const active = useMemo(() => {
-    const group = mode === 'expense' ? chartData.expense : chartData.income
-    const breakdown = drillRootId ? group?.breakdowns?.[drillRootId] : null
+  const group = useMemo(
+    () => (mode === 'expense' ? chartData.expense : chartData.income),
+    [mode, chartData],
+  )
 
-    if (breakdown) {
-      return {
-        slices: breakdown.slices || [],
-        total: breakdown.total || 0,
-        rootName: breakdown.rootName,
-        drilled: true,
-      }
-    }
+  const breakdown = drillRootId ? group?.breakdowns?.[drillRootId] : null
 
-    return {
-      slices: group?.slices || [],
-      total: group?.total || 0,
-      rootName: null,
-      drilled: false,
-    }
-  }, [mode, chartData, drillRootId])
+  const branchTransactions = useMemo(() => {
+    if (!drillRootId || !drillBranchId) return []
+    return getBranchTransactions(
+      state.transactions,
+      state.categories,
+      mode,
+      drillRootId,
+      drillBranchId,
+    )
+  }, [state.transactions, state.categories, mode, drillRootId, drillBranchId])
 
   const handleModeChange = (nextMode) => {
     setMode(nextMode)
     setDrillRootId(null)
+    setDrillBranchId(null)
   }
 
   const handleSliceClick = (item) => {
     if (item?.hasChildren) setDrillRootId(item.categoryId)
+  }
+
+  const handleBranchClick = (item) => {
+    setDrillBranchId(item.categoryId)
+  }
+
+  const handleBackToRoot = () => {
+    setDrillRootId(null)
+    setDrillBranchId(null)
+  }
+
+  const handleBackToBranch = () => {
+    setDrillBranchId(null)
+  }
+
+  let panelTitle
+  let panelData
+  let panelTotal
+  let panelOnSliceClick
+  let panelOnBack
+  let showBranchPanel = false
+
+  if (drillRootId && drillBranchId) {
+    showBranchPanel = true
+    const branchSlice = breakdown?.slices?.find((s) => s.categoryId === drillBranchId)
+    panelTitle = `${breakdown?.rootName || ''} · ${branchSlice?.name || '明细'}`
+  } else if (drillRootId) {
+    panelTitle = `${breakdown?.rootName || ''} · 子分类`
+    panelData = breakdown?.slices || []
+    panelTotal = breakdown?.total || 0
+    panelOnSliceClick = handleBranchClick
+    panelOnBack = handleBackToRoot
+  } else {
+    panelTitle = mode === 'expense' ? '花在哪里' : '钱从哪来'
+    panelData = group?.slices || []
+    panelTotal = group?.total || 0
+    panelOnSliceClick = handleSliceClick
+    panelOnBack = undefined
   }
 
   return (
@@ -181,23 +273,26 @@ export default function ChartsPage() {
         </div>
       </Card>
 
-      <ChartPanel
-        title={
-          active.drilled
-            ? `${active.rootName} · 子分类`
-            : mode === 'expense'
-              ? '花在哪里'
-              : '钱从哪来'
-        }
-        data={active.slices}
-        total={active.total}
-        emptyText={
-          mode === 'expense' ? '本账期还没有支出记录' : '本账期还没有收入记录'
-        }
-        chartType={chartType}
-        onSliceClick={active.drilled ? undefined : handleSliceClick}
-        onBack={active.drilled ? () => setDrillRootId(null) : undefined}
-      />
+      {showBranchPanel ? (
+        <BranchTransactionsPanel
+          title={panelTitle}
+          items={branchTransactions}
+          categories={state.categories}
+          onBack={handleBackToBranch}
+        />
+      ) : (
+        <ChartPanel
+          title={panelTitle}
+          data={panelData}
+          total={panelTotal}
+          emptyText={
+            mode === 'expense' ? '本账期还没有支出记录' : '本账期还没有收入记录'
+          }
+          chartType={chartType}
+          onSliceClick={panelOnSliceClick}
+          onBack={panelOnBack}
+        />
+      )}
     </div>
   )
 }

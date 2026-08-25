@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildCategoryChartGroup,
+  getBranchTransactions,
   UNCATEGORIZED_CATEGORY_ID,
 } from './categoryChartData'
 import { getRootCategoryId } from './categories'
@@ -161,5 +162,50 @@ describe('buildCategoryChartGroup', () => {
         hasChildren: false,
       }),
     ])
+  })
+})
+
+describe('getBranchTransactions', () => {
+  it('returns transactions whose category rolls up to the given branch', () => {
+    const transactions = [
+      { ...transaction('fuel', 1200), id: 't1', createdAt: '2024-01-02T10:00:00' },
+      { ...transaction('toll', 800), id: 't2', createdAt: '2024-01-02T11:00:00' },
+      { ...transaction('vehicle', 300), id: 't3', createdAt: '2024-01-02T09:00:00' },
+      { ...transaction('food', 500), id: 't4', createdAt: '2024-01-02T08:00:00' },
+      { ...transaction('salary', 9000, 'income'), id: 't5', createdAt: '2024-01-02T12:00:00' },
+    ]
+
+    const fuelTx = getBranchTransactions(transactions, categories, 'expense', 'vehicle', 'fuel')
+    expect(fuelTx.map((t) => t.id)).toEqual(['t1'])
+
+    const ownTx = getBranchTransactions(
+      transactions,
+      categories,
+      'expense',
+      'vehicle',
+      'vehicle',
+    )
+    expect(ownTx.map((t) => t.id)).toEqual(['t3'])
+
+    const uncategorizedTx = getBranchTransactions(
+      transactions,
+      categories,
+      'expense',
+      UNCATEGORIZED_CATEGORY_ID,
+      UNCATEGORIZED_CATEGORY_ID,
+    )
+    expect(uncategorizedTx).toEqual([])
+
+    const sorted = getBranchTransactions(
+      [
+        { ...transaction('fuel', 100), id: 'a', createdAt: '2024-01-01T08:00:00' },
+        { ...transaction('fuel', 200), id: 'b', createdAt: '2024-01-03T08:00:00' },
+      ],
+      categories,
+      'expense',
+      'vehicle',
+      'fuel',
+    )
+    expect(sorted.map((t) => t.id)).toEqual(['b', 'a'])
   })
 })

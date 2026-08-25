@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-export const STAR_BURST_MS = 900
+export const STAR_BURST_MS = 380
 const STAR_COUNT = 14
 
 function edgePoint(angle) {

@@ -6,13 +6,13 @@ import StarBurst, { STAR_BURST_MS } from './StarBurst'
 import { getCategoryIconName, getCategoryPathLabel } from '../lib/categories'
 import { formatMoney } from '../lib/money'
 
-const PAGE_ENTER_MS = 750
+const PAGE_ENTER_MS = 360
 const PAGE_STAGGER_MS = 100
 const BURST_MS = STAR_BURST_MS
 const EXIT_SLIDE_MS = 320
 const EXIT_COLLAPSE_MS = 280
 const EXIT_MS = EXIT_SLIDE_MS + EXIT_COLLAPSE_MS + 80
-const FLASH_MS = 1100
+const FLASH_MS = 520
 
 function itemFingerprint(item) {
   return [
@@ -213,7 +213,9 @@ export default function TransactionDayList({
     const nextIds = items.map((item) => item.id)
     const prevSet = new Set(prevIds)
     const nextSet = new Set(nextIds)
-    const hydrate = skipBurstRef.current || prevMap.size === 0
+    // skipBurstRef 负责首屏/切页灌入；prevMap 为空可能只是当天本无记录，
+    // 此时新添第一笔仍应星爆，故不再把空 prevMap 当作灌入。
+    const hydrate = skipBurstRef.current
 
     const added = nextIds.filter((id) => !prevSet.has(id))
     const removed = prevIds.filter((id) => !nextSet.has(id))
