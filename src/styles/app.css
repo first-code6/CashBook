@@ -973,12 +973,16 @@ input:focus-visible {
   appearance: none;
   width: 100%;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'dot name percent'
+    'dot meter amount';
   align-items: center;
-  gap: 0.45rem;
+  column-gap: 0.45rem;
+  row-gap: 0.16rem;
   border: none;
   border-radius: 10px;
-  padding: 0.3rem 0.4rem;
+  padding: 0.35rem 0.4rem;
   background: transparent;
   color: inherit;
   font-family: inherit;
@@ -1006,6 +1010,7 @@ input:focus-visible {
 }
 
 .pie-legend__dot {
+  grid-area: dot;
   width: 9px;
   height: 9px;
   border-radius: 50%;
@@ -1013,9 +1018,69 @@ input:focus-visible {
   box-shadow: 0 1px 0 rgba(90, 70, 40, 0.1);
 }
 
-.pie-legend__value {
-  color: var(--ink-soft);
+.pie-legend__name {
+  grid-area: name;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pie-legend__percent {
+  grid-area: percent;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
+}
+
+.pie-legend__meter {
+  grid-area: meter;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(120, 100, 80, 0.14);
+  overflow: hidden;
+}
+
+.pie-legend__meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  min-width: 4px;
+}
+
+.pie-legend__value {
+  grid-area: amount;
+  justify-self: end;
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.pie-slice-label {
+  pointer-events: none;
+}
+
+.pie-slice-label text {
+  fill: #fffdf8;
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  paint-order: stroke fill;
+  stroke: rgba(38, 50, 40, 0.78);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.pie-slice-label--outside text {
+  fill: var(--ink);
+  stroke: #fff8ec;
+  stroke-width: 5px;
+}
+
+.pie-slice-label__line {
+  stroke: rgba(61, 50, 40, 0.4);
+  stroke-width: 1.5;
 }
 
 .pie-chart-wrap {
@@ -1097,22 +1162,15 @@ input:focus-visible {
   }
 
   .pie-legend__item {
-    grid-template-columns: auto minmax(0, 1fr);
-    row-gap: 0.08rem;
     padding: 0.38rem 0.35rem;
   }
 
-  .pie-legend__name {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .pie-legend__percent {
+    font-size: 0.88rem;
   }
 
   .pie-legend__value {
-    grid-column: 2;
-    justify-self: start;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
   }
 
   .chart-tooltip {

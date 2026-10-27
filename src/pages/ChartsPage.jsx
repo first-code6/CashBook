@@ -8,6 +8,7 @@ import { useCashbook } from '../context/CashbookContext'
 import { useCyclePieData } from '../hooks/useCycleStats'
 import { getBranchTransactions } from '../lib/categoryChartData'
 import { getCategoryIconName, getCategoryPathLabel } from '../lib/categories'
+import { formatSharePercent } from '../lib/chartLayout'
 import { formatDayLabel } from '../lib/date'
 import { formatMoney } from '../lib/money'
 
@@ -43,7 +44,8 @@ function ChartPanel({
           <CategoryChart chartType={chartType} data={slices} onSliceClick={onSliceClick} />
           <div className="pie-legend">
             {slices.map((item) => {
-              const percent = total > 0 ? Math.round((item.value / total) * 100) : 0
+              const ratio = total > 0 ? item.value / total : 0
+              const share = formatSharePercent(ratio)
               const interactive = Boolean(
                 onSliceClick && (item.hasChildren || item.drillable),
               )
@@ -54,9 +56,16 @@ function ChartPanel({
                     style={{ background: item.fill }}
                   />
                   <span className="pie-legend__name">{item.name}</span>
-                  <span className="pie-legend__value">
-                    ¥{formatMoney(item.value)} · {percent}%
+                  <span className="pie-legend__percent">{share}</span>
+                  <span className="pie-legend__meter" aria-hidden="true">
+                    <span
+                      style={{
+                        width: `${Math.min(100, ratio * 100)}%`,
+                        background: item.fill,
+                      }}
+                    />
                   </span>
+                  <span className="pie-legend__value">¥{formatMoney(item.value)}</span>
                 </>
               )
 

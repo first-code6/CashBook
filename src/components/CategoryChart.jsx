@@ -10,8 +10,63 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { getCategoryChartLayout } from '../lib/chartLayout'
+import { formatSharePercent, getCategoryChartLayout } from '../lib/chartLayout'
 import { formatMoney } from '../lib/money'
+
+const RADIAN = Math.PI / 180
+
+function getPieRadii(size, chartType) {
+  const outer = Math.min(size.width, size.height) * (size.isCompact ? 0.32 : 0.3)
+  const inner = chartType === 'donut' ? outer * 0.58 : 0
+  return { inner, outer }
+}
+
+function ShareLabel({
+  cx,
+  cy,
+  midAngle,
+  innerRadius,
+  outerRadius,
+  percent,
+  chartType,
+}) {
+  if (
+    cx == null ||
+    cy == null ||
+    midAngle == null ||
+    percent == null ||
+    !Number.isFinite(percent) ||
+    percent <= 0
+  ) {
+    return null
+  }
+
+  const insideMin = chartType === 'donut' ? 0.14 : 0.08
+  const inside = percent >= insideMin
+  const angle = -midAngle * RADIAN
+  const radius = inside
+    ? innerRadius + (outerRadius - innerRadius) * (innerRadius > 0 ? 0.5 : 0.62)
+    : outerRadius + 16
+  const x = cx + radius * Math.cos(angle)
+  const y = cy + radius * Math.sin(angle)
+  const anchor = inside ? 'middle' : x >= cx ? 'start' : 'end'
+  const lineEndRadius = outerRadius + 12
+
+  return (
+    <g className={inside ? 'pie-slice-label' : 'pie-slice-label pie-slice-label--outside'}>
+      {inside ? null : (
+        <path
+          className="pie-slice-label__line"
+          d={`M${cx + (outerRadius + 2) * Math.cos(angle)},${cy + (outerRadius + 2) * Math.sin(angle)}L${cx + lineEndRadius * Math.cos(angle)},${cy + lineEndRadius * Math.sin(angle)}`}
+          fill="none"
+        />
+      )}
+      <text x={x} y={y} textAnchor={anchor} dominantBaseline="central">
+        {formatSharePercent(percent)}
+      </text>
+    </g>
+  )
+}
 
 const tooltipStyle = {
   borderRadius: 12,
@@ -55,13 +110,17 @@ function useChartSize(chartType, itemCount) {
   return { ref, size }
 }
 
-function ChartTooltip({ active, payload }) {
+function ChartTooltip({ active, payload, total }) {
   if (!active || !payload?.length) return null
   const item = payload[0]
+  const value = Number(item.value || 0)
+  const share = total > 0 ? formatSharePercent(value / total) : '0%'
   return (
     <div className="chart-tooltip">
       <strong>{item.name || item.payload?.name}</strong>
-      <span>¥{formatMoney(Number(item.value || 0))}</span>
+      <span>
+        {share} · ¥{formatMoney(value)}
+      </span>
     </div>
   )
 }
@@ -71,15 +130,24 @@ export default function CategoryChart({ chartType, data, onSliceClick }) {
 
   if (!data.length) return null
 
+  const total = data.reduce((sum, entry) => sum + (Number(entry.value) || 0), 0)
+  const pieRadii = chartType === 'bar' ? null : getPieRadii(size, chartType)
+
   const getCellProps = (entry) => {
+    const share = total > 0 ? formatSharePercent(entry.value / total) : '0%'
     const interactive = Boolean(onSliceClick && (entry.hasChildren || entry.drillable))
-    if (!interactive) return { className: 'category-chart__slice' }
+    if (!interactive) {
+      return {
+        className: 'category-chart__slice',
+        'aria-label': `${entry.name} ${share}`,
+      }
+    }
 
     return {
       className: 'category-chart__slice category-chart__slice--interactive',
       role: 'button',
       tabIndex: 0,
-      'aria-label': `查看${entry.name}的明细`,
+      'aria-label': `查看${entry.name}的明细，占${share}`,
       onClick: () => onSliceClick(entry),
       onKeyDown: (event) => {
         if (event.key !== 'Enter' && event.key !== ' ') return
@@ -145,7 +213,7 @@ export default function CategoryChart({ chartType, data, onSliceClick }) {
               />
             </>
           )}
-          <Tooltip content={<ChartTooltip />} contentStyle={tooltipStyle} />
+          <Tooltip content={<ChartTooltip total={total} />} contentStyle={tooltipStyle} />
           <Bar
             dataKey="value"
             radius={size.isCompact ? [0, 10, 10, 0] : [10, 10, 0, 0]}
@@ -167,13 +235,11 @@ export default function CategoryChart({ chartType, data, onSliceClick }) {
             nameKey="name"
             cx="50%"
             cy="50%"
-            innerRadius={
-              chartType === 'donut' ? Math.min(size.width, size.height) * 0.24 : 0
-            }
-            outerRadius={
-              Math.min(size.width, size.height) * (size.isCompact ? 0.39 : 0.36)
-            }
+            innerRadius={pieRadii.inner}
+            outerRadius={pieRadii.outer}
             paddingAngle={2}
+            label={(props) => <ShareLabel {...props} chartType={chartType} />}
+            labelLine={false}
             isAnimationActive
             animationDuration={400}
             animationBegin={0}
@@ -182,7 +248,7 @@ export default function CategoryChart({ chartType, data, onSliceClick }) {
               <Cell key={entry.categoryId} fill={entry.fill} {...getCellProps(entry)} />
             ))}
           </Pie>
-          <Tooltip content={<ChartTooltip />} contentStyle={tooltipStyle} />
+          <Tooltip content={<ChartTooltip total={total} />} contentStyle={tooltipStyle} />
         </PieChart>
       )}
     </div>
